@@ -127,7 +127,7 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
                     : 'bg-red-700 border-red-600 text-white'
                 }`}
               >
-                {passoReset === 0 && 'Reimposta database'}
+                {passoReset === 0 && 'Cancella tutti i dati'}
                 {passoReset === 1 && 'Sei sicuro? Tocca ancora per continuare'}
                 {passoReset === 2 && 'Sì, cancella tutto e ricomincia'}
               </button>
