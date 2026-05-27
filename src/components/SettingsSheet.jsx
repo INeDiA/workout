@@ -1,13 +1,24 @@
-import { X, ChevronRight } from 'lucide-react'
+import { useState } from 'react'
+import { X, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 const DURATE_TIMER = [60, 90, 120, 150, 180]
 
 export default function SettingsSheet({ settings, onUpdateSettings, onClose, onGestisciSchede }) {
   const { schedaAttiva } = useApp()
+  const [passoReset, setPassoReset] = useState(0) // 0 normale · 1 primo avviso · 2 conferma finale
 
   function set(campo, valore) {
     onUpdateSettings({ ...settings, [campo]: valore })
+  }
+
+  function handleReset() {
+    if (passoReset < 2) {
+      setPassoReset((p) => p + 1)
+      return
+    }
+    localStorage.clear()
+    window.location.reload()
   }
 
   return (
@@ -88,6 +99,47 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
                   {d}s
                 </button>
               ))}
+            </div>
+          </div>
+          {/* Reset database */}
+          <div className="pt-2">
+            <div className="border-t border-gray-800 pt-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Zona pericolosa</p>
+
+              {passoReset > 0 && (
+                <div className="flex items-start gap-2 bg-red-950 border border-red-800 rounded-xl p-3 mb-3">
+                  <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-300 leading-relaxed">
+                    {passoReset === 1
+                      ? 'Verranno cancellati tutti gli allenamenti, le schede personalizzate e le impostazioni. Questa azione è irreversibile.'
+                      : 'Ultima conferma — dopo non si torna indietro.'}
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={handleReset}
+                className={`w-full py-3 rounded-2xl text-sm font-semibold transition-all active:scale-98 border ${
+                  passoReset === 0
+                    ? 'bg-gray-900 border-gray-700 text-gray-400 hover:border-red-800 hover:text-red-400'
+                    : passoReset === 1
+                    ? 'bg-red-950 border-red-700 text-red-300'
+                    : 'bg-red-700 border-red-600 text-white'
+                }`}
+              >
+                {passoReset === 0 && 'Reimposta database'}
+                {passoReset === 1 && 'Sei sicuro? Tocca ancora per continuare'}
+                {passoReset === 2 && 'Sì, cancella tutto e ricomincia'}
+              </button>
+
+              {passoReset > 0 && (
+                <button
+                  onClick={() => setPassoReset(0)}
+                  className="w-full mt-2 py-2 text-xs text-gray-600 hover:text-gray-400 transition-colors"
+                >
+                  Annulla
+                </button>
+              )}
             </div>
           </div>
         </div>
