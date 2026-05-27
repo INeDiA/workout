@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X } from 'lucide-react'
+import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
 import Timer from '../components/Timer'
@@ -139,8 +139,9 @@ export default function Oggi() {
 
   function handlePickerSelect({ esercizio, addToAll }) {
     if (addToAll) {
+      const esercizioCondiviso = { ...esercizio, isShared: true }
       schedaAttiva.sessioni.forEach((sessione) => {
-        aggiungiEsercizio(schedaAttiva.id, sessione.id, esercizio)
+        aggiungiEsercizio(schedaAttiva.id, sessione.id, esercizioCondiviso)
       })
     } else {
       aggiungiEsercizio(schedaAttiva.id, giornoEffettivo, esercizio)
@@ -345,45 +346,73 @@ export default function Oggi() {
         )}
 
         {/* Lista esercizi */}
-        {giorno.esercizi.map((esercizio) =>
-          editMode ? (
-            <div key={esercizio.id} className="relative">
-              <ExerciseCard esercizio={esercizio} datiSerie={[]} onAggiornaSerie={undefined} />
-              <div className="absolute top-3 right-10 flex gap-1">
-                <button
-                  onClick={() => setModalEsercizio(esercizio)}
-                  className="p-2 bg-gray-800 hover:bg-gray-700 active:scale-90 rounded-xl transition-all border border-gray-700"
-                >
-                  <Pencil size={13} className="text-blue-400" />
-                </button>
-                <button
-                  onClick={() => rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)}
-                  className="p-2 bg-gray-800 hover:bg-red-900 active:scale-90 rounded-xl transition-all border border-gray-700"
-                >
-                  <Trash2 size={13} className="text-red-400" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <ExerciseCard
-              key={esercizio.id}
-              esercizio={esercizio}
-              datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
-              onAggiornaSerie={
-                activeSession
-                  ? (sets) => {
-                      const prevSets = activeSession.exercises[esercizio.id]?.sets || []
-                      const nuovaSerieCompletata = sets.some(
-                        (s, i) => s.done && !(prevSets[i]?.done)
-                      )
-                      if (nuovaSerieCompletata) timer.start()
-                      aggiornaEsercizio(esercizio.id, { sets })
-                    }
-                  : undefined
-              }
-            />
+        {(() => {
+          const eserciziFissi = giorno.esercizi.filter((e) => !e.isShared)
+          const eserciziCondivisi = giorno.esercizi.filter((e) => e.isShared)
+
+          function renderEsercizio(esercizio) {
+            if (editMode) {
+              return (
+                <div key={esercizio.id} className="relative">
+                  <ExerciseCard esercizio={esercizio} datiSerie={[]} onAggiornaSerie={undefined} />
+                  <div className="absolute top-3 right-10 flex gap-1">
+                    <button
+                      onClick={() => setModalEsercizio(esercizio)}
+                      className="p-2 bg-gray-800 hover:bg-gray-700 active:scale-90 rounded-xl transition-all border border-gray-700"
+                    >
+                      <Pencil size={13} className="text-blue-400" />
+                    </button>
+                    <button
+                      onClick={() => rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)}
+                      className="p-2 bg-gray-800 hover:bg-red-900 active:scale-90 rounded-xl transition-all border border-gray-700"
+                    >
+                      <Trash2 size={13} className="text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              )
+            }
+            return (
+              <ExerciseCard
+                key={esercizio.id}
+                esercizio={esercizio}
+                datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
+                onAggiornaSerie={
+                  activeSession
+                    ? (sets) => {
+                        const prevSets = activeSession.exercises[esercizio.id]?.sets || []
+                        const nuovaSerieCompletata = sets.some(
+                          (s, i) => s.done && !(prevSets[i]?.done)
+                        )
+                        if (nuovaSerieCompletata) timer.start()
+                        aggiornaEsercizio(esercizio.id, { sets })
+                      }
+                    : undefined
+                }
+              />
+            )
+          }
+
+          return (
+            <>
+              {eserciziFissi.map(renderEsercizio)}
+
+              {eserciziCondivisi.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 h-px bg-gray-800" />
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                      <Layers2 size={12} />
+                      <span>Comuni a tutte le sessioni</span>
+                    </div>
+                    <div className="flex-1 h-px bg-gray-800" />
+                  </div>
+                  {eserciziCondivisi.map(renderEsercizio)}
+                </>
+              )}
+            </>
           )
-        )}
+        })()}
 
         {/* Aggiungi esercizio in edit mode */}
         {editMode && (

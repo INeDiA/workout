@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { X, Plus, Search } from 'lucide-react'
+import { X, Plus, Search, Layers2 } from 'lucide-react'
 import { ESERCIZI_DATABASE, GRUPPI_MUSCOLARI } from '../data/exerciseDatabase'
 import { useLocalStorage } from '../hooks/useStorage'
 
@@ -10,7 +10,6 @@ export function useEserciziCustom() {
 export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato }) {
   const [query, setQuery] = useState('')
   const [gruppoFiltro, setGruppoFiltro] = useState('Tutti')
-  const [tutteLeSessioni, setTutteLeSessioni] = useState(false)
   const [eserciziCustom] = useEserciziCustom()
 
   const eserciziFiltrati = useMemo(() => {
@@ -29,9 +28,8 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
     return { custom, db }
   }, [query, gruppoFiltro, eserciziCustom])
 
-  function handleSeleziona(esercizio) {
-    // Converti i default nel formato esercizio della sessione
-    const esercizioSessione = {
+  function toEsercizioSessione(esercizio) {
+    return {
       nome: esercizio.nome,
       gruppo: esercizio.gruppo,
       serie: esercizio.defaultSerie ?? esercizio.serie ?? 3,
@@ -40,7 +38,14 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
       isBodyweight: esercizio.isBodyweight || false,
       isTime: esercizio.isTime || false,
     }
-    onSelect({ esercizio: esercizioSessione, addToAll: tutteLeSessioni })
+  }
+
+  function handleSeleziona(esercizio) {
+    onSelect({ esercizio: toEsercizioSessione(esercizio), addToAll: false })
+  }
+
+  function handleSelezionaTutte(esercizio) {
+    onSelect({ esercizio: toEsercizioSessione(esercizio), addToAll: true })
   }
 
   return (
@@ -97,19 +102,27 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
             <>
               <p className="text-xs font-semibold text-gray-500 px-1 pb-1 pt-1">Personalizzati</p>
               {eserciziFiltrati.custom.map((e) => (
-                <button
-                  key={e.id || e.nome}
-                  onClick={() => handleSeleziona(e)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-gray-800 hover:bg-gray-700 active:scale-98 rounded-xl transition-all text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white">{e.nome}</span>
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900 text-blue-300 border border-blue-800">
-                      Custom
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 ml-2 flex-shrink-0">{e.gruppo}</span>
-                </button>
+                <div key={e.id || e.nome} className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleSeleziona(e)}
+                    className="flex-1 flex items-center justify-between px-4 py-3 bg-gray-800 hover:bg-gray-700 active:scale-98 rounded-xl transition-all text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-white">{e.nome}</span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900 text-blue-300 border border-blue-800">
+                        Custom
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 ml-2 flex-shrink-0">{e.gruppo}</span>
+                  </button>
+                  <button
+                    onClick={() => handleSelezionaTutte(e)}
+                    title="Aggiungi a tutte le sessioni"
+                    className="p-3 bg-gray-800 hover:bg-indigo-900 active:scale-90 rounded-xl transition-all flex-shrink-0"
+                  >
+                    <Layers2 size={15} className="text-gray-500 hover:text-indigo-400" />
+                  </button>
+                </div>
               ))}
               {eserciziFiltrati.db.length > 0 && (
                 <p className="text-xs font-semibold text-gray-500 px-1 pb-1 pt-2">Database</p>
@@ -119,14 +132,22 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
 
           {/* Esercizi database */}
           {eserciziFiltrati.db.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => handleSeleziona(e)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-800 hover:bg-gray-700 active:scale-98 rounded-xl transition-all text-left"
-            >
-              <span className="text-sm font-medium text-white">{e.nome}</span>
-              <span className="text-xs text-gray-500 ml-2 flex-shrink-0">{e.gruppo}</span>
-            </button>
+            <div key={e.id} className="flex items-center gap-1">
+              <button
+                onClick={() => handleSeleziona(e)}
+                className="flex-1 flex items-center justify-between px-4 py-3 bg-gray-800 hover:bg-gray-700 active:scale-98 rounded-xl transition-all text-left"
+              >
+                <span className="text-sm font-medium text-white">{e.nome}</span>
+                <span className="text-xs text-gray-500 ml-2 flex-shrink-0">{e.gruppo}</span>
+              </button>
+              <button
+                onClick={() => handleSelezionaTutte(e)}
+                title="Aggiungi a tutte le sessioni"
+                className="p-3 bg-gray-800 hover:bg-indigo-900 active:scale-90 rounded-xl transition-all flex-shrink-0"
+              >
+                <Layers2 size={15} className="text-gray-500 hover:text-indigo-400" />
+              </button>
+            </div>
           ))}
 
           {eserciziFiltrati.custom.length === 0 && eserciziFiltrati.db.length === 0 && (
@@ -134,20 +155,11 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
           )}
         </div>
 
-        {/* Toggle "aggiungi a tutte le sessioni" */}
+        {/* Hint icona layers */}
         <div className="border-t border-gray-800 mt-3 pt-3 flex-shrink-0">
-          <button
-            onClick={() => setTutteLeSessioni((v) => !v)}
-            className="w-full flex items-center justify-between px-1 py-1 rounded-xl active:scale-98 transition-all"
-          >
-            <div className="text-left">
-              <p className="text-sm font-medium text-white">Aggiungi a tutte le sessioni</p>
-              <p className="text-xs text-gray-500 mt-0.5">L'esercizio verrà inserito in ogni giorno della scheda</p>
-            </div>
-            <div className={`relative w-11 h-6 rounded-full flex-shrink-0 ml-4 transition-colors ${tutteLeSessioni ? 'bg-blue-600' : 'bg-gray-700'}`}>
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${tutteLeSessioni ? 'translate-x-5' : 'translate-x-0'}`} />
-            </div>
-          </button>
+          <p className="text-xs text-gray-600 text-center">
+            Tocca <Layers2 size={11} className="inline mb-0.5" /> per aggiungere a tutte le sessioni
+          </p>
         </div>
 
         {/* Pulsante crea personalizzato */}
