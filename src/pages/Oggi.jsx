@@ -6,6 +6,7 @@ import Timer from '../components/Timer'
 import EditExerciseModal from '../components/EditExerciseModal'
 import SettingsSheet from '../components/SettingsSheet'
 import { useWakeLock } from '../hooks/useWakeLock'
+import { useTimer } from '../hooks/useTimer'
 import { ORDINE_GIORNI } from '../data/workout'
 
 const COLORI = {
@@ -54,6 +55,9 @@ export default function Oggi() {
 
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
+
+  // Timer recupero — gestito qui per poterlo avviare dal check serie
+  const timer = useTimer(settings.timerDuration)
 
   // Giorno effettivo: override manuale ha priorità su quello calcolato
   const giornoEffettivo = giornoOverride ?? giornoOggi
@@ -208,7 +212,7 @@ export default function Oggi() {
           className="sticky z-20 px-4 py-3 bg-gray-950 border-b border-gray-800/50"
           style={{ top: 'env(safe-area-inset-top, 0px)' }}
         >
-          <Timer defaultDuration={settings.timerDuration} />
+          <Timer timer={timer} />
         </div>
       )}
 
@@ -272,7 +276,15 @@ export default function Oggi() {
               datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
               onAggiornaSerie={
                 activeSession
-                  ? (sets) => aggiornaEsercizio(esercizio.id, { sets })
+                  ? (sets) => {
+                      // Avvia il timer se una serie è stata appena completata (non rimossa)
+                      const prevSets = activeSession.exercises[esercizio.id]?.sets || []
+                      const nuovaSerieCompletata = sets.some(
+                        (s, i) => s.done && !(prevSets[i]?.done)
+                      )
+                      if (nuovaSerieCompletata) timer.start()
+                      aggiornaEsercizio(esercizio.id, { sets })
+                    }
                   : undefined
               }
             />

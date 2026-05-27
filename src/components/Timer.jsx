@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { Play, Pause, RotateCcw, Settings } from 'lucide-react'
-import { useTimer } from '../hooks/useTimer'
 
 const DURATE_PREDEFINITE = [60, 90, 120, 150, 180]
 
-export default function Timer({ defaultDuration = 90 }) {
-  const { remaining, running, duration, start, pause, reset, changeDuration } = useTimer(defaultDuration)
+export default function Timer({ timer }) {
+  const { remaining, running, duration, start, pause, reset, changeDuration } = timer
   const [showOptions, setShowOptions] = useState(false)
 
   // Parametri cerchio SVG
