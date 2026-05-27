@@ -1,9 +1,11 @@
-import { X } from 'lucide-react'
+import { X, ChevronRight } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 const DURATE_TIMER = [60, 90, 120, 150, 180]
-const GIORNI_SETTIMANA = [1, 2, 3]
 
-export default function SettingsSheet({ settings, onUpdateSettings, onClose }) {
+export default function SettingsSheet({ settings, onUpdateSettings, onClose, onGestisciSchede }) {
+  const { schedaAttiva } = useApp()
+
   function set(campo, valore) {
     onUpdateSettings({ ...settings, [campo]: valore })
   }
@@ -25,37 +27,23 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose }) {
           </button>
         </div>
 
-        <div className="space-y-6">
-          {/* Giorni per settimana */}
-          <div>
-            <p className="text-sm font-semibold text-white mb-1">
-              Giorni di allenamento per settimana
-            </p>
-            <p className="text-xs text-gray-400 mb-3">
-              Determina quanti giorni ruotano (A→B→C). Con 2 giorni la rotazione è A→B→A→B.
-            </p>
-            <div className="flex gap-3">
-              {GIORNI_SETTIMANA.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => set('giorniSettimana', n)}
-                  className={`flex-1 py-3 rounded-2xl text-sm font-bold border transition-colors ${
-                    settings.giorniSettimana === n
-                      ? 'bg-blue-600 border-blue-500 text-white'
-                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
-                  }`}
-                >
-                  {n} {n === 1 ? 'giorno' : 'giorni'}
-                </button>
-              ))}
+        <div className="space-y-5">
+          {/* Scheda attiva — link a gestione schede */}
+          <button
+            onClick={() => {
+              onClose()
+              onGestisciSchede?.()
+            }}
+            className="w-full flex items-center justify-between bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl px-4 py-3.5 transition-colors"
+          >
+            <div className="text-left">
+              <p className="text-sm font-semibold text-white">Scheda attiva</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {schedaAttiva?.nome || 'Nessuna scheda'}
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Giorni attivi:{' '}
-              <span className="text-gray-300 font-medium">
-                {['A', 'B', 'C'].slice(0, settings.giorniSettimana).join(' · ')}
-              </span>
-            </p>
-          </div>
+            <ChevronRight size={18} className="text-gray-500" />
+          </button>
 
           {/* Timer recupero */}
           <div>

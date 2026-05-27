@@ -1,5 +1,44 @@
 // Dati di esempio per la scheda — modificabili dall'utente nell'app
-// Struttura: 3 giorni in rotazione A → B → C
+
+export const COLORI_SESSIONE = {
+  blue: {
+    gradient: 'from-blue-900/30 to-gray-950',
+    badge: 'bg-blue-950 text-blue-300 border border-blue-800',
+    pill: 'bg-blue-600 text-white',
+    bar: 'bg-blue-500',
+    dot: 'bg-blue-500',
+  },
+  purple: {
+    gradient: 'from-purple-900/30 to-gray-950',
+    badge: 'bg-purple-950 text-purple-300 border border-purple-800',
+    pill: 'bg-purple-600 text-white',
+    bar: 'bg-purple-500',
+    dot: 'bg-purple-500',
+  },
+  green: {
+    gradient: 'from-green-900/30 to-gray-950',
+    badge: 'bg-green-950 text-green-300 border border-green-800',
+    pill: 'bg-green-600 text-white',
+    bar: 'bg-green-500',
+    dot: 'bg-green-500',
+  },
+  orange: {
+    gradient: 'from-orange-900/30 to-gray-950',
+    badge: 'bg-orange-950 text-orange-300 border border-orange-800',
+    pill: 'bg-orange-600 text-white',
+    bar: 'bg-orange-500',
+    dot: 'bg-orange-500',
+  },
+  red: {
+    gradient: 'from-red-900/30 to-gray-950',
+    badge: 'bg-red-950 text-red-300 border border-red-800',
+    pill: 'bg-red-600 text-white',
+    bar: 'bg-red-500',
+    dot: 'bg-red-500',
+  },
+}
+
+export const COLORI_LISTA = ['blue', 'purple', 'green', 'orange', 'red']
 
 export const GIORNI_DEFAULT = {
   A: {
@@ -203,11 +242,17 @@ export const GIORNI_DEFAULT = {
   },
 }
 
-export const ORDINE_GIORNI = ['A', 'B', 'C']
+export const SCHEDA_DEFAULT = {
+  id: 'default',
+  nome: 'La mia scheda',
+  sessioni: [GIORNI_DEFAULT.A, GIORNI_DEFAULT.B, GIORNI_DEFAULT.C],
+}
 
-export function prossimoPiorno(sessioniCompletate) {
-  if (sessioniCompletate.length === 0) return 'A'
+export function prossimoPiorno(sessioniCompletate, ordineSessioni) {
+  const ordine = ordineSessioni || ['A', 'B', 'C']
+  if (sessioniCompletate.length === 0) return ordine[0]
   const ultimo = sessioniCompletate[sessioniCompletate.length - 1]
-  const idx = ORDINE_GIORNI.indexOf(ultimo.dayId)
-  return ORDINE_GIORNI[(idx + 1) % 3]
+  const idx = ordine.indexOf(ultimo.dayId)
+  if (idx === -1) return ordine[0]
+  return ordine[(idx + 1) % ordine.length]
 }

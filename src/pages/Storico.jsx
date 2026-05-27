@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Flame, Calendar, TrendingUp } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ProgressChart from '../components/ProgressChart'
+import { COLORI_SESSIONE } from '../data/workout'
 
 // Data locale in formato YYYY-MM-DD (evita sfasamenti UTC)
 function toLocalDateStr(d) {
@@ -47,21 +48,34 @@ function getMesiDaMostrare(sessioniCompletate) {
   return mesi
 }
 
-const COLORE_GIORNO = {
-  A: 'bg-blue-600',
-  B: 'bg-purple-600',
-  C: 'bg-green-600',
-}
-
 const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
 export default function Storico() {
-  const { sessioniCompletate, streak, workoutData } = useApp()
-  const [giornoGrafico, setGiornoGrafico] = useState('A')
+  const { sessioniCompletate, streak, workoutData, schede, schedaAttiva } = useApp()
+
+  // Sessione iniziale per il grafico: prima sessione della scheda attiva
+  const primaSessioneId = schedaAttiva?.sessioni?.[0]?.id || null
+  const [giornoGrafico, setGiornoGrafico] = useState(primaSessioneId)
 
   const oggiStr = toLocalDateStr(new Date())
   const dateCompletate = new Map(sessioniCompletate.map((s) => [s.date, s]))
   const mesiDaMostrare = getMesiDaMostrare(sessioniCompletate)
+
+  // Mappa colore sessione: { [sessionId]: dotColorClass }
+  // Costruita da TUTTE le sessioni di TUTTE le schede
+  const sessionColorMap = useMemo(() => {
+    const map = {}
+    for (const scheda of (schede || [])) {
+      for (const sess of (scheda.sessioni || [])) {
+        const colore = sess.colore || 'blue'
+        map[sess.id] = (COLORI_SESSIONE[colore] || COLORI_SESSIONE.blue).dot
+      }
+    }
+    return map
+  }, [schede])
+
+  // Legenda: sessioni della scheda attiva
+  const sessioniLeggenda = schedaAttiva?.sessioni || []
 
   // Frequenza settimanale (ultimi 30 giorni)
   const sessioni30gg = sessioniCompletate.filter((s) => {
@@ -70,7 +84,15 @@ export default function Storico() {
   }).length
   const freqSettimana = sessioni30gg > 0 ? (sessioni30gg / 4.3).toFixed(1) : '—'
 
-  const eserciziGrafico = workoutData[giornoGrafico].esercizi.filter((e) => !e.isBodyweight)
+  // Esercizi per il grafico: dalla sessione selezionata della scheda attiva
+  const sessioneGrafico = giornoGrafico ? workoutData[giornoGrafico] : null
+  const eserciziGrafico = (sessioneGrafico?.esercizi || []).filter((e) => !e.isBodyweight)
+
+  // Se la sessione selezionata non esiste più, usa la prima disponibile
+  const giornoGraficoEffettivo =
+    giornoGrafico && workoutData[giornoGrafico]
+      ? giornoGrafico
+      : primaSessioneId
 
   return (
     <div className="min-h-screen bg-gray-950 pb-24">
@@ -107,15 +129,20 @@ export default function Storico() {
 
         {/* Calendario mensile */}
         <div>
-          {/* Legenda */}
-          <div className="flex justify-end gap-3 mb-3">
-            {[['A', 'bg-blue-600'], ['B', 'bg-purple-600'], ['C', 'bg-green-600']].map(([id, cls]) => (
-              <div key={id} className="flex items-center gap-1.5">
-                <div className={`w-2.5 h-2.5 rounded-sm ${cls}`} />
-                <span className="text-xs text-gray-400">{id}</span>
-              </div>
-            ))}
-          </div>
+          {/* Legenda — dinamica in base alla scheda attiva */}
+          {sessioniLeggenda.length > 0 && (
+            <div className="flex justify-end gap-3 mb-3 flex-wrap">
+              {sessioniLeggenda.map((sess) => {
+                const dotClass = sessionColorMap[sess.id] || 'bg-blue-500'
+                return (
+                  <div key={sess.id} className="flex items-center gap-1.5">
+                    <div className={`w-2.5 h-2.5 rounded-sm ${dotClass}`} />
+                    <span className="text-xs text-gray-400">{sess.nome}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {/* Un blocco per ogni mese, dal più recente al più vecchio */}
           <div className="space-y-6">
@@ -126,12 +153,10 @@ export default function Storico() {
 
               return (
                 <div key={`${anno}-${mese}`}>
-                  {/* Nome mese + anno */}
                   <p className="text-sm font-semibold text-white mb-2 capitalize">
                     {nomeMese}
                   </p>
 
-                  {/* Intestazione giorni settimana per questo mese */}
                   <div className="grid grid-cols-7 gap-1 mb-1">
                     {GIORNI_SETTIMANA.map((g, i) => (
                       <div key={i} className="text-center text-[11px] text-gray-600 font-medium py-0.5">
@@ -151,12 +176,17 @@ export default function Storico() {
                       const isOggi = data === oggiStr
                       const isFuturo = data > oggiStr
 
+                      // Colore del dot per questa sessione (cerca in tutte le schede)
+                      const dotColor = sessione
+                        ? (sessionColorMap[sessione.dayId] || 'bg-blue-600')
+                        : null
+
                       return (
                         <div
                           key={data}
                           className={`aspect-square rounded-lg flex items-center justify-center ${
-                            sessione
-                              ? (COLORE_GIORNO[sessione.dayId] || 'bg-blue-600')
+                            dotColor
+                              ? dotColor
                               : isFuturo
                               ? 'bg-transparent'
                               : 'bg-gray-800/60'
@@ -164,7 +194,7 @@ export default function Storico() {
                         >
                           <span
                             className={`text-xs font-medium leading-none ${
-                              sessione
+                              dotColor
                                 ? 'text-white'
                                 : isOggi
                                 ? 'text-white font-bold'
@@ -186,35 +216,39 @@ export default function Storico() {
         </div>
 
         {/* Grafici progressione pesi */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-white">Progressione pesi</h2>
-            <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
-              {['A', 'B', 'C'].map((id) => (
-                <button
-                  key={id}
-                  onClick={() => setGiornoGrafico(id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                    giornoGrafico === id ? 'bg-gray-700 text-white' : 'text-gray-400'
-                  }`}
-                >
-                  {id}
-                </button>
-              ))}
+        {schedaAttiva?.sessioni?.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-white">Progressione pesi</h2>
+              <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1 flex-wrap max-w-[60%] justify-end">
+                {schedaAttiva.sessioni.map((sess) => (
+                  <button
+                    key={sess.id}
+                    onClick={() => setGiornoGrafico(sess.id)}
+                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      giornoGraficoEffettivo === sess.id ? 'bg-gray-700 text-white' : 'text-gray-400'
+                    }`}
+                  >
+                    {sess.emoji} {sess.nome}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {(workoutData[giornoGraficoEffettivo]?.esercizi || [])
+                .filter((e) => !e.isBodyweight)
+                .map((e) => (
+                  <ProgressChart
+                    key={e.id}
+                    esercizioId={e.id}
+                    nomeEsercizio={e.nome}
+                    sessions={sessioniCompletate}
+                  />
+                ))}
             </div>
           </div>
-
-          <div className="space-y-3">
-            {eserciziGrafico.map((e) => (
-              <ProgressChart
-                key={e.id}
-                esercizioId={e.id}
-                nomeEsercizio={e.nome}
-                sessions={sessioniCompletate}
-              />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )

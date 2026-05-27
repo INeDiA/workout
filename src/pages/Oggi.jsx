@@ -1,38 +1,22 @@
 import { useState } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings } from 'lucide-react'
+import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
 import Timer from '../components/Timer'
 import EditExerciseModal from '../components/EditExerciseModal'
+import ExercisePicker from '../components/ExercisePicker'
 import SettingsSheet from '../components/SettingsSheet'
+import SchedeSheet from '../components/SchedeSheet'
+import SessionEditModal from '../components/SessionEditModal'
 import { useWakeLock } from '../hooks/useWakeLock'
 import { useTimer } from '../hooks/useTimer'
-import { ORDINE_GIORNI } from '../data/workout'
-
-const COLORI = {
-  A: {
-    gradient: 'from-blue-900/30 to-gray-950',
-    badge: 'bg-blue-950 text-blue-300 border border-blue-800',
-    pill: 'bg-blue-600 text-white',
-    bar: 'bg-blue-500',
-  },
-  B: {
-    gradient: 'from-purple-900/30 to-gray-950',
-    badge: 'bg-purple-950 text-purple-300 border border-purple-800',
-    pill: 'bg-purple-600 text-white',
-    bar: 'bg-purple-500',
-  },
-  C: {
-    gradient: 'from-green-900/30 to-gray-950',
-    badge: 'bg-green-950 text-green-300 border border-green-800',
-    pill: 'bg-green-600 text-white',
-    bar: 'bg-green-500',
-  },
-}
+import { useEserciziCustom } from '../components/ExercisePicker'
+import { COLORI_SESSIONE } from '../data/workout'
 
 export default function Oggi() {
   const {
     giornoOggi,
+    ordineSessioni,
     workoutData,
     activeSession,
     iniziaSessione,
@@ -40,32 +24,75 @@ export default function Oggi() {
     completaSessione,
     settings,
     setSettings,
+    schedaAttiva,
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
-    resetWorkout,
+    resetSchedaDefault,
+    aggiungiSessione,
+    rinominaSessione,
+    eliminaSessione,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
   const [editMode, setEditMode] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showSchedeSheet, setShowSchedeSheet] = useState(false)
   const [confermaIncompleto, setConfermaIncompleto] = useState(false)
   const [confermaReset, setConfermaReset] = useState(false)
-  const [modalEsercizio, setModalEsercizio] = useState(null)
+  const [confermaEliminaSessione, setConfermaEliminaSessione] = useState(null)
+
+  // Esercizio modal
+  const [modalEsercizio, setModalEsercizio] = useState(null) // null=chiuso, undefined=nuovo, obj=modifica
+  const [showPicker, setShowPicker] = useState(false)
+
+  // Sessione modal
+  const [showSessionModal, setShowSessionModal] = useState(false)
+  const [sessioneModaleTarget, setSessioneModaleTarget] = useState(null) // null=nuova, obj=modifica
+
+  // Esercizi custom
+  const [, setEserciziCustom] = useEserciziCustom()
 
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
 
-  // Timer recupero — gestito qui per poterlo avviare dal check serie
+  // Timer recupero
   const timer = useTimer(settings.timerDuration)
 
-  // Giorno effettivo: override manuale ha priorità su quello calcolato
-  const giornoEffettivo = giornoOverride ?? giornoOggi
+  // Giorno effettivo
+  const giornoEffettivo = giornoOverride ?? giornoOggi ?? ordineSessioni[0]
   const giorno = workoutData[giornoEffettivo]
-  const colori = COLORI[giornoEffettivo]
+  const colori = (giorno?.colore && COLORI_SESSIONE[giorno.colore]) || COLORI_SESSIONE.blue
 
-  // Giorni disponibili in base alla configurazione
-  const giorniAttivi = ORDINE_GIORNI.slice(0, settings.giorniSettimana || 3)
+  // Se non c'è nessuna sessione
+  if (!giorno) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-gray-400 mb-4">Nessuna sessione nella scheda attiva.</p>
+          <button
+            onClick={() => {
+              setSessioneModaleTarget(null)
+              setShowSessionModal(true)
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold"
+          >
+            Aggiungi sessione
+          </button>
+          {showSessionModal && (
+            <SessionEditModal
+              sessione={null}
+              onSave={(dati) => {
+                aggiungiSessione(schedaAttiva.id, dati)
+                setShowSessionModal(false)
+              }}
+              onClose={() => setShowSessionModal(false)}
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const totSerie = giorno.esercizi.reduce((sum, e) => sum + e.serie, 0)
   const serieCompletate = activeSession
@@ -78,7 +105,7 @@ export default function Oggi() {
 
   function handleIniziaSessione() {
     iniziaSessione(giornoEffettivo)
-    setGiornoOverride(null) // dopo l'avvio l'override non serve più
+    setGiornoOverride(null)
   }
 
   function handleComplezione() {
@@ -93,23 +120,60 @@ export default function Oggi() {
 
   function handleSalvaEsercizio(dati) {
     if (modalEsercizio?.id) {
-      modificaEsercizio(giornoEffettivo, modalEsercizio.id, dati)
+      // Modifica esercizio esistente
+      modificaEsercizio(schedaAttiva.id, giornoEffettivo, modalEsercizio.id, dati)
     } else {
-      aggiungiEsercizio(giornoEffettivo, dati)
+      // Nuovo esercizio personalizzato — salvalo anche in sm_esercizi_custom
+      const id = Date.now().toString() + Math.random().toString(36).slice(2)
+      const esercizioCustom = {
+        ...dati,
+        id,
+        defaultSerie: dati.serie,
+        defaultReps: dati.reps,
+      }
+      setEserciziCustom((prev) => [...(prev || []), esercizioCustom])
+      aggiungiEsercizio(schedaAttiva.id, giornoEffettivo, dati)
     }
     setModalEsercizio(null)
   }
 
+  function handlePickerSelect(esercizio) {
+    aggiungiEsercizio(schedaAttiva.id, giornoEffettivo, esercizio)
+    setShowPicker(false)
+  }
+
   function handleReset() {
     if (!confermaReset) { setConfermaReset(true); return }
-    resetWorkout()
+    resetSchedaDefault()
     setConfermaReset(false)
     setEditMode(false)
   }
 
   function togglePill(id) {
-    // Toccare il giorno già attivo deseleziona l'override
     setGiornoOverride(giornoOverride === id ? null : id)
+  }
+
+  function handleSalvaSessione(dati) {
+    if (sessioneModaleTarget) {
+      rinominaSessione(schedaAttiva.id, sessioneModaleTarget.id, dati)
+    } else {
+      aggiungiSessione(schedaAttiva.id, dati)
+    }
+    setShowSessionModal(false)
+    setSessioneModaleTarget(null)
+  }
+
+  function handleEliminaSessione(sessioneId) {
+    if (confermaEliminaSessione === sessioneId) {
+      eliminaSessione(schedaAttiva.id, sessioneId)
+      setConfermaEliminaSessione(null)
+      // Se eliminata quella attiva, torna alla prima
+      if (giornoEffettivo === sessioneId) {
+        setGiornoOverride(null)
+      }
+    } else {
+      setConfermaEliminaSessione(sessioneId)
+    }
   }
 
   return (
@@ -125,7 +189,6 @@ export default function Oggi() {
             {activeSession && (
               <span className="text-xs text-gray-400 font-medium">{percentuale}%</span>
             )}
-            {/* Impostazioni */}
             {!activeSession && (
               <button
                 onClick={() => setShowSettings(true)}
@@ -135,9 +198,8 @@ export default function Oggi() {
                 <Settings size={15} />
               </button>
             )}
-            {/* Modifica scheda */}
             <button
-              onClick={() => { setEditMode(!editMode); setConfermaReset(false) }}
+              onClick={() => { setEditMode(!editMode); setConfermaReset(false); setConfermaEliminaSessione(null) }}
               disabled={!!activeSession}
               className={`p-2 rounded-xl transition-colors ${
                 editMode
@@ -151,51 +213,79 @@ export default function Oggi() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-bold text-white leading-tight">{giorno.focus}</h1>
+        <h1 className="text-2xl font-bold text-white leading-tight">{giorno.focus || giorno.nome}</h1>
         <p className="text-sm text-gray-400 mt-1">
           {giorno.esercizi.length} esercizi · {totSerie} serie totali
         </p>
 
-        {/* Selettore giorno manuale — visibile solo senza sessione attiva */}
+        {/* Selettore sessione — visibile senza sessione attiva */}
         {!activeSession && (
           <div className="mt-4">
-            <div className="flex gap-2">
-              {giorniAttivi.map((id) => {
+            <div className="flex gap-2 flex-wrap">
+              {ordineSessioni.map((id) => {
+                const sess = workoutData[id]
+                if (!sess) return null
+                const sessColori = (sess.colore && COLORI_SESSIONE[sess.colore]) || COLORI_SESSIONE.blue
                 const attivo = id === giornoEffettivo
                 return (
                   <button
                     key={id}
-                    onClick={() => togglePill(id)}
+                    onClick={() => editMode ? (setSessioneModaleTarget(sess), setShowSessionModal(true)) : togglePill(id)}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
                       attivo
-                        ? colori.pill + ' border-transparent shadow-md'
+                        ? sessColori.pill + ' border-transparent shadow-md'
                         : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
                     }`}
                   >
-                    {id}
-                    <span className={`text-xs font-normal ${attivo ? 'opacity-80' : 'opacity-50'}`}>
-                      {workoutData[id].focus.split(' · ')[0]}
-                    </span>
+                    {sess.emoji && <span>{sess.emoji}</span>}
+                    <span>{sess.nome}</span>
+                    {/* Pulsante elimina sessione in edit mode */}
+                    {editMode && (schedaAttiva?.sessioni?.length || 0) > 1 && (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEliminaSessione(id)
+                        }}
+                        className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                          confermaEliminaSessione === id
+                            ? 'bg-red-600 text-white'
+                            : 'bg-black/30 text-white/70 hover:bg-red-600'
+                        }`}
+                      >
+                        ×
+                      </span>
+                    )}
                   </button>
                 )
               })}
+
+              {/* Pulsante aggiungi sessione in edit mode */}
+              {editMode && (
+                <button
+                  onClick={() => { setSessioneModaleTarget(null); setShowSessionModal(true) }}
+                  className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm border border-dashed border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400 transition-colors"
+                >
+                  <Plus size={14} />
+                </button>
+              )}
             </div>
-            {/* Indica se il giorno è stato scelto manualmente */}
-            {giornoOverride && giornoOverride !== giornoOggi && (
+
+            {/* Indica override */}
+            {!editMode && giornoOverride && giornoOverride !== giornoOggi && (
               <p className="text-xs text-gray-500 mt-2">
                 Rotazione automatica:{' '}
                 <button
                   onClick={() => setGiornoOverride(null)}
                   className="text-blue-400 hover:text-blue-300 underline"
                 >
-                  torna al Giorno {giornoOggi}
+                  torna a {workoutData[giornoOggi]?.nome || giornoOggi}
                 </button>
               </p>
             )}
           </div>
         )}
 
-        {/* Barra avanzamento sessione */}
+        {/* Barra avanzamento */}
         {activeSession && (
           <div className="mt-4 h-1.5 bg-gray-800 rounded-full overflow-hidden">
             <div
@@ -206,7 +296,7 @@ export default function Oggi() {
         )}
       </div>
 
-      {/* Timer sticky — rimane visibile mentre si scrolla tra gli esercizi */}
+      {/* Timer sticky */}
       {activeSession && (
         <div
           className="sticky z-20 px-4 py-3 bg-gray-950 border-b border-gray-800/50"
@@ -228,12 +318,11 @@ export default function Oggi() {
           </button>
         )}
 
-
         {/* Banner modalità modifica */}
         {editMode && (
           <div className="bg-blue-950 border border-blue-800 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
             <p className="text-xs text-blue-300">
-              Tocca ✏️ per modificare o 🗑 per rimuovere un esercizio.
+              Tocca una sessione per rinominarla · ✏️ per modificare · 🗑 per rimuovere.
             </p>
             <button
               onClick={handleReset}
@@ -262,7 +351,7 @@ export default function Oggi() {
                   <Pencil size={13} className="text-blue-400" />
                 </button>
                 <button
-                  onClick={() => rimuoviEsercizio(giornoEffettivo, esercizio.id)}
+                  onClick={() => rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)}
                   className="p-2 bg-gray-800 hover:bg-red-900 active:scale-90 rounded-xl transition-all border border-gray-700"
                 >
                   <Trash2 size={13} className="text-red-400" />
@@ -277,7 +366,6 @@ export default function Oggi() {
               onAggiornaSerie={
                 activeSession
                   ? (sets) => {
-                      // Avvia il timer se una serie è stata appena completata (non rimossa)
                       const prevSets = activeSession.exercises[esercizio.id]?.sets || []
                       const nuovaSerieCompletata = sets.some(
                         (s, i) => s.done && !(prevSets[i]?.done)
@@ -294,7 +382,7 @@ export default function Oggi() {
         {/* Aggiungi esercizio in edit mode */}
         {editMode && (
           <button
-            onClick={() => setModalEsercizio(undefined)}
+            onClick={() => setShowPicker(true)}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-4 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={18} />
@@ -330,6 +418,15 @@ export default function Oggi() {
         )}
       </div>
 
+      {/* ExercisePicker */}
+      {showPicker && (
+        <ExercisePicker
+          onSelect={handlePickerSelect}
+          onClose={() => setShowPicker(false)}
+          onCreaPersonalizzato={() => setModalEsercizio(undefined)}
+        />
+      )}
+
       {/* Modal aggiungi/modifica esercizio */}
       {modalEsercizio !== null && (
         <EditExerciseModal
@@ -339,13 +436,28 @@ export default function Oggi() {
         />
       )}
 
+      {/* Modal sessione */}
+      {showSessionModal && (
+        <SessionEditModal
+          sessione={sessioneModaleTarget}
+          onSave={handleSalvaSessione}
+          onClose={() => { setShowSessionModal(false); setSessioneModaleTarget(null) }}
+        />
+      )}
+
       {/* Pannello impostazioni */}
       {showSettings && (
         <SettingsSheet
           settings={settings}
           onUpdateSettings={setSettings}
           onClose={() => setShowSettings(false)}
+          onGestisciSchede={() => setShowSchedeSheet(true)}
         />
+      )}
+
+      {/* Schede sheet */}
+      {showSchedeSheet && (
+        <SchedeSheet onClose={() => setShowSchedeSheet(false)} />
       )}
     </div>
   )

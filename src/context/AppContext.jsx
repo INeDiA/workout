@@ -1,7 +1,6 @@
 import { createContext, useContext, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useStorage'
-import { useWorkoutData } from '../hooks/useWorkoutData'
-import { ORDINE_GIORNI } from '../data/workout'
+import { useSchedeData } from '../hooks/useSchedeData'
 
 const AppContext = createContext(null)
 
@@ -18,17 +17,33 @@ function dataOggi() {
 export function AppProvider({ children }) {
   const [sessions, setSessions] = useLocalStorage('sm_sessions', [])
   const [activeSession, setActiveSession] = useLocalStorage('sm_active_session', null)
-  const [settings, setSettings] = useLocalStorage('sm_settings', { timerDuration: 90, giorniSettimana: 3 })
+  const [settings, setSettings] = useLocalStorage('sm_settings', { timerDuration: 90 })
 
+  const schedeData = useSchedeData()
   const {
+    schede,
+    schedaAttiva,
     workoutData,
+    setSchedaAttiva,
+    creaScheda,
+    rinominaScheda,
+    eliminaScheda,
+    duplicaScheda,
+    aggiungiSessione,
+    rinominaSessione,
+    eliminaSessione,
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
-    resetWorkout,
-  } = useWorkoutData()
+    resetSchedaDefault,
+  } = schedeData
 
   const oggi = dataOggi()
+
+  const ordineSessioni = useMemo(
+    () => (schedaAttiva?.sessioni || []).map((s) => s.id),
+    [schedaAttiva]
+  )
 
   const sessioniCompletate = useMemo(
     () => sessions.filter((s) => s.completed),
@@ -37,14 +52,13 @@ export function AppProvider({ children }) {
 
   const giornoOggi = useMemo(() => {
     if (activeSession && activeSession.date === oggi) return activeSession.dayId
-    const ordine = ORDINE_GIORNI.slice(0, settings.giorniSettimana || 3)
-    if (sessioniCompletate.length === 0) return ordine[0]
+    if (ordineSessioni.length === 0) return null
+    if (sessioniCompletate.length === 0) return ordineSessioni[0]
     const ultimo = sessioniCompletate[sessioniCompletate.length - 1]
-    const idx = ordine.indexOf(ultimo.dayId)
-    // Se l'ultimo giorno non è nell'ordine corrente (es. si è ridotto il numero di giorni), riparte da capo
-    if (idx === -1) return ordine[0]
-    return ordine[(idx + 1) % ordine.length]
-  }, [activeSession, oggi, sessioniCompletate, settings.giorniSettimana])
+    const idx = ordineSessioni.indexOf(ultimo.dayId)
+    if (idx === -1) return ordineSessioni[0]
+    return ordineSessioni[(idx + 1) % ordineSessioni.length]
+  }, [activeSession, oggi, sessioniCompletate, ordineSessioni])
 
   const streak = useMemo(() => {
     const dateSet = new Set(sessioniCompletate.map((s) => s.date))
@@ -118,13 +132,28 @@ export function AppProvider({ children }) {
         settings,
         setSettings,
         giornoOggi,
+        ordineSessioni,
         streak,
         oggi,
+        // Schede
+        schede,
+        schedaAttiva,
         workoutData,
+        setSchedaAttiva,
+        creaScheda,
+        rinominaScheda,
+        eliminaScheda,
+        duplicaScheda,
+        // Sessioni
+        aggiungiSessione,
+        rinominaSessione,
+        eliminaSessione,
+        // Esercizi
         aggiungiEsercizio,
         modificaEsercizio,
         rimuoviEsercizio,
-        resetWorkout,
+        resetSchedaDefault,
+        // Sessione workout
         iniziaSessione,
         aggiornaEsercizio,
         aggiornaNutrizione,
