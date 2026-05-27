@@ -43,7 +43,7 @@ export const COLORI_LISTA = ['blue', 'purple', 'green', 'orange', 'red']
 export const GIORNI_DEFAULT = {
   A: {
     id: 'A',
-    nome: 'Giorno A',
+    nome: 'Push',
     focus: 'Petto · Tricipiti',
     emoji: '💪',
     colore: 'blue',
@@ -121,7 +121,7 @@ export const GIORNI_DEFAULT = {
 
   B: {
     id: 'B',
-    nome: 'Giorno B',
+    nome: 'Pull',
     focus: 'Dorsali · Bicipiti',
     emoji: '🏋️',
     colore: 'orange',
@@ -199,7 +199,7 @@ export const GIORNI_DEFAULT = {
 
   C: {
     id: 'C',
-    nome: 'Giorno C',
+    nome: 'Legs',
     focus: 'Gambe · Spalle',
     emoji: '🦵',
     colore: 'green',
