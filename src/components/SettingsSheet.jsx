@@ -33,7 +33,7 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
     const blob = new Blob([json], { type: 'application/json' })
     const fileName = `allenamento-backup-${new Date().toISOString().slice(0, 10)}.json`
 
-    // Web Share API (iOS / Android)
+    // Web Share API (iOS / Android) — tenta prima la condivisione file
     if (navigator.canShare) {
       const file = new File([blob], fileName, { type: 'application/json' })
       if (navigator.canShare({ files: [file] })) {
@@ -41,14 +41,14 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
           await navigator.share({ files: [file], title: 'Backup allenamento' })
           localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
           return
-        } catch {
-          // utente ha annullato — non fare nulla
-          return
+        } catch (err) {
+          if (err?.name === 'AbortError') return  // utente ha annullato
+          // Altro errore (es. Android non supporta .json): cade nel fallback
         }
       }
     }
 
-    // Fallback download
+    // Fallback: download diretto
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
