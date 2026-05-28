@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 
-export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false }) {
+export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false, rightSlot, onCardClick }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const { nome, serie, reps, note, gruppo, isBodyweight, isTime } = esercizio
 
@@ -40,44 +40,47 @@ export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSeri
       }`}
     >
       {/* Intestazione card */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 p-4 text-left"
-      >
-        {/* Indicatore progresso */}
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors ${
-            tutteCompletate && attiva
-              ? 'bg-green-600 text-white'
-              : serieCompletate > 0
-              ? 'bg-blue-900 text-blue-300 border border-blue-700'
-              : 'bg-gray-800 text-gray-400'
-          }`}
+      <div className="flex items-stretch">
+        <button
+          onClick={onCardClick ? onCardClick : () => setExpanded(!expanded)}
+          className="flex-1 flex items-center gap-3 p-4 pr-2 text-left min-w-0"
         >
-          {tutteCompletate && attiva ? '✓' : `${serieCompletate}/${serie}`}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p
-            className={`font-semibold text-sm leading-tight truncate ${
-              tutteCompletate && attiva ? 'text-green-300' : 'text-white'
+          {/* Indicatore progresso */}
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-colors ${
+              tutteCompletate && attiva
+                ? 'bg-green-600 text-white'
+                : serieCompletate > 0
+                ? 'bg-blue-900 text-blue-300 border border-blue-700'
+                : 'bg-gray-800 text-gray-400'
             }`}
           >
-            {nome}
-          </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {serie} serie × {reps}
-            <span className="mx-1">·</span>
-            {gruppo}
-          </p>
-        </div>
+            {tutteCompletate && attiva ? '✓' : `${serieCompletate}/${serie}`}
+          </div>
 
-        {expanded ? (
-          <ChevronUp size={16} className="text-gray-500 flex-shrink-0" />
-        ) : (
-          <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
-        )}
-      </button>
+          <div className="flex-1 min-w-0">
+            <p
+              className={`font-semibold text-sm leading-tight truncate ${
+                tutteCompletate && attiva ? 'text-green-300' : 'text-white'
+              }`}
+            >
+              {nome}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {serie} serie × {reps}
+              <span className="mx-1">·</span>
+              {gruppo}
+            </p>
+          </div>
+
+          {!onCardClick && (expanded ? (
+            <ChevronUp size={16} className="text-gray-500 flex-shrink-0" />
+          ) : (
+            <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
+          ))}
+        </button>
+        {rightSlot}
+      </div>
 
       {/* Dettaglio espanso */}
       {expanded && (

@@ -35,6 +35,7 @@ export function AppProvider({ children }) {
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
+    riordinaEsercizi,
     resetSchedaDefault,
   } = schedeData
 
@@ -196,6 +197,7 @@ export function AppProvider({ children }) {
         aggiungiEsercizio,
         modificaEsercizio,
         rimuoviEsercizio,
+        riordinaEsercizi,
         resetSchedaDefault,
         // Sessione workout
         iniziaSessione,

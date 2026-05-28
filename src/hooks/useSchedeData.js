@@ -164,7 +164,7 @@ export function useSchedeData() {
     return nuovaSessione
   }
 
-  function rinominaSessione(schedaId, sessioneId, { nome, emoji, colore }) {
+  function rinominaSessione(schedaId, sessioneId, { nome, focus, emoji, colore }) {
     setSchede((prev) =>
       (prev || schedeEffettive).map((s) => {
         if (s.id !== schedaId) return s
@@ -175,7 +175,7 @@ export function useSchedeData() {
               ? {
                   ...sess,
                   nome: nome ?? sess.nome,
-                  focus: nome ?? sess.focus,
+                  focus: focus ?? nome ?? sess.focus,
                   emoji: emoji ?? sess.emoji,
                   colore: colore ?? sess.colore,
                 }
@@ -252,6 +252,20 @@ export function useSchedeData() {
     )
   }
 
+  function riordinaEsercizi(schedaId, sessioneId, nuoviEsercizi) {
+    setSchede((prev) =>
+      (prev || schedeEffettive).map((s) => {
+        if (s.id !== schedaId) return s
+        return {
+          ...s,
+          sessioni: s.sessioni.map((sess) =>
+            sess.id === sessioneId ? { ...sess, esercizi: nuoviEsercizi } : sess
+          ),
+        }
+      })
+    )
+  }
+
   function resetSchedaDefault() {
     setSchede((prev) =>
       (prev || schedeEffettive).map((s) => {
@@ -279,6 +293,7 @@ export function useSchedeData() {
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
+    riordinaEsercizi,
     resetSchedaDefault,
   }
 }

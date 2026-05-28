@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2, GripVertical } from 'lucide-react'
 import { backupNecessario } from '../utils/backup'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
@@ -29,6 +29,7 @@ export default function Oggi() {
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
+    riordinaEsercizi,
     resetSchedaDefault,
     aggiungiSessione,
     rinominaSessione,
@@ -55,6 +56,70 @@ export default function Oggi() {
 
   // Esercizi custom
   const [, setEserciziCustom] = useEserciziCustom()
+
+  // Drag & drop riordino esercizi
+  const [dragId, setDragId] = useState(null)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [dragTargetId, setDragTargetId] = useState(null)
+  const dragStartY = useRef(0)
+  const dragTargetIdRef = useRef(null)
+
+  useEffect(() => {
+    if (!dragId) return
+
+    const onMove = (e) => {
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX
+      setDragOffset(clientY - dragStartY.current)
+
+      // Trova la card sotto il cursore (esclusa quella trascinata)
+      const elements = document.elementsFromPoint(clientX, clientY)
+      let newTarget = null
+      for (const el of elements) {
+        const card = el.closest('[data-drag-id]')
+        if (card && card.dataset.dragId !== dragId) {
+          newTarget = card.dataset.dragId
+          break
+        }
+      }
+      if (newTarget !== dragTargetIdRef.current) {
+        dragTargetIdRef.current = newTarget
+        setDragTargetId(newTarget)
+      }
+    }
+
+    const onEnd = () => {
+      const targetId = dragTargetIdRef.current
+      if (targetId && targetId !== dragId && giorno?.esercizi) {
+        const fromItem = giorno.esercizi.find((e) => e.id === dragId)
+        const toItem = giorno.esercizi.find((e) => e.id === targetId)
+        // Non permettere di attraversare il confine fisso/condiviso
+        if (fromItem && toItem && !!fromItem.isShared === !!toItem.isShared) {
+          const arr = [...giorno.esercizi]
+          const fromIdx = arr.findIndex((e) => e.id === dragId)
+          const toIdx = arr.findIndex((e) => e.id === targetId)
+          const [item] = arr.splice(fromIdx, 1)
+          arr.splice(toIdx, 0, item)
+          riordinaEsercizi(schedaAttiva.id, giornoEffettivo, arr)
+        }
+      }
+      setDragId(null)
+      setDragOffset(0)
+      setDragTargetId(null)
+      dragTargetIdRef.current = null
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('touchmove', onMove, { passive: false })
+    window.addEventListener('mouseup', onEnd)
+    window.addEventListener('touchend', onEnd)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('mouseup', onEnd)
+      window.removeEventListener('touchend', onEnd)
+    }
+  }, [dragId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
@@ -375,24 +440,59 @@ export default function Oggi() {
           const eserciziCondivisi = giorno.esercizi.filter((e) => e.isShared)
 
           function renderEsercizio(esercizio) {
+            const isDragging = esercizio.id === dragId
+            const isTarget = esercizio.id === dragTargetId && !isDragging
+
             if (editMode) {
-              return (
-                <div key={esercizio.id} className="relative">
-                  <ExerciseCard esercizio={esercizio} datiSerie={[]} onAggiornaSerie={undefined} />
-                  <div className="absolute top-3 right-10 flex gap-1">
-                    <button
-                      onClick={() => setModalEsercizio(esercizio)}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 active:scale-90 rounded-xl transition-all border border-gray-700"
-                    >
-                      <Pencil size={13} className="text-blue-400" />
-                    </button>
-                    <button
-                      onClick={() => rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)}
-                      className="p-2 bg-gray-800 hover:bg-red-900 active:scale-90 rounded-xl transition-all border border-gray-700"
-                    >
-                      <Trash2 size={13} className="text-red-400" />
-                    </button>
+              // In edit mode: corpo card apre modale, niente accordion
+              const rightSlot = (
+                <div className="flex items-center pr-2 gap-0.5">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)
+                    }}
+                    className="p-2 rounded-xl hover:bg-red-900 active:scale-90 transition-all"
+                  >
+                    <Trash2 size={13} className="text-red-400" />
+                  </button>
+                  <div
+                    className="p-2 touch-none select-none cursor-grab active:cursor-grabbing"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      dragStartY.current = e.clientY
+                      setDragId(esercizio.id)
+                    }}
+                    onTouchStart={(e) => {
+                      dragStartY.current = e.touches[0].clientY
+                      setDragId(esercizio.id)
+                    }}
+                  >
+                    <GripVertical size={16} className="text-gray-500" />
                   </div>
+                </div>
+              )
+              return (
+                <div
+                  key={esercizio.id}
+                  data-drag-id={esercizio.id}
+                  className={`transition-shadow ${isTarget ? 'ring-2 ring-blue-500/50 rounded-2xl' : ''}`}
+                  style={isDragging ? {
+                    transform: `translateY(${dragOffset}px)`,
+                    zIndex: 30,
+                    opacity: 0.92,
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                    borderRadius: '16px',
+                    pointerEvents: 'none',
+                  } : {}}
+                >
+                  <ExerciseCard
+                    esercizio={esercizio}
+                    datiSerie={[]}
+                    onAggiornaSerie={undefined}
+                    onCardClick={() => setModalEsercizio(esercizio)}
+                    rightSlot={rightSlot}
+                  />
                 </div>
               )
             }
@@ -431,8 +531,8 @@ export default function Oggi() {
                     </div>
                     <div className="flex-1 h-px bg-gray-800" />
                   </div>
-                  {eserciziCondivisi.map(renderEsercizio)}
-                </>
+                  {eserciziCondivisi.map(renderEsercizio)}</>
+
               )}
             </>
           )

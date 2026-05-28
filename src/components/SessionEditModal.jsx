@@ -4,16 +4,19 @@ import { COLORI_LISTA, COLORI_SESSIONE } from '../data/workout'
 
 export default function SessionEditModal({ sessione, onSave, onClose }) {
   const [nome, setNome] = useState('')
+  const [focus, setFocus] = useState('')
   const [emoji, setEmoji] = useState('💪')
   const [colore, setColore] = useState('blue')
 
   useEffect(() => {
     if (sessione) {
-      setNome(sessione.nome || sessione.focus || '')
+      setNome(sessione.nome || '')
+      setFocus(sessione.focus || sessione.nome || '')
       setEmoji(sessione.emoji || '💪')
       setColore(sessione.colore || 'blue')
     } else {
       setNome('')
+      setFocus('')
       setEmoji('💪')
       setColore('blue')
     }
@@ -22,7 +25,7 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
   function handleSubmit(e) {
     e.preventDefault()
     if (!nome.trim()) return
-    onSave({ nome: nome.trim(), emoji, colore })
+    onSave({ nome: nome.trim(), focus: focus.trim() || nome.trim(), emoji, colore })
   }
 
   return (
@@ -45,43 +48,50 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nome sessione */}
+          {/* Focus / titolo */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Nome sessione *
+              Titolo <span className="text-gray-600 font-normal">(header)</span>
             </label>
             <input
               autoFocus
               type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              value={focus}
+              onChange={(e) => setFocus(e.target.value)}
               placeholder="es. Petto · Tricipiti · Spalle"
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
           </div>
 
-          {/* Emoji */}
-          <div>
-            <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Emoji
-            </label>
-            <input
-              type="text"
-              value={emoji}
-              onChange={(e) => {
-                // Prendi solo il primo carattere/emoji
-                const val = e.target.value
-                if (val.length === 0) {
-                  setEmoji('')
-                  return
-                }
-                // Estrai il primo grapheme cluster (emoji)
-                const match = [...val]
-                setEmoji(match[match.length - 1] || val[0])
-              }}
-              placeholder="💪"
-              className="w-24 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-2xl text-center focus:outline-none focus:border-blue-500"
-            />
+          {/* Emoji + Nome breve sulla stessa riga */}
+          <div className="flex items-end gap-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1.5 block font-medium">Emoji</label>
+              <input
+                type="text"
+                value={emoji}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (val.length === 0) { setEmoji(''); return }
+                  const match = [...val]
+                  setEmoji(match[match.length - 1] || val[0])
+                }}
+                placeholder="💪"
+                className="w-16 h-12 bg-gray-800 border border-gray-700 rounded-xl px-2 text-2xl text-center focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-gray-400 mb-1.5 block font-medium">
+                Nome breve * <span className="text-gray-600 font-normal">(pill)</span>
+              </label>
+              <input
+                type="text"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="es. Push"
+                className="w-full h-12 bg-gray-800 border border-gray-700 rounded-xl px-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
+            </div>
           </div>
 
           {/* Selettore colore */}

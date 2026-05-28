@@ -1,7 +1,7 @@
 import { Dumbbell, BarChart2, Leaf } from 'lucide-react'
 
 const TABS = [
-  { id: 'oggi', label: 'Oggi', Icon: Dumbbell },
+  { id: 'oggi', label: 'Scheda', Icon: Dumbbell },
   { id: 'storico', label: 'Storico', Icon: BarChart2 },
   { id: 'nutrizione', label: 'Nutrizione', Icon: Leaf },
 ]
