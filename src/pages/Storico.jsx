@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Flame, Calendar, TrendingUp } from 'lucide-react'
+import { Flame, Calendar, TrendingUp, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ProgressChart from '../components/ProgressChart'
 import SessionePassataModal from '../components/SessionePassataModal'
@@ -52,12 +52,16 @@ function getMesiDaMostrare(sessioniCompletate) {
 const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
 export default function Storico() {
-  const { sessioniCompletate, streak, workoutData, schede, schedaAttiva } = useApp()
+  const {
+    sessioniCompletate, streak, workoutData, schede, schedaAttiva,
+    activeSession, aggiungiSessionePassata, eliminaSessionePassata,
+  } = useApp()
 
   // Sessione iniziale per il grafico: prima sessione della scheda attiva
   const primaSessioneId = schedaAttiva?.sessioni?.[0]?.id || null
   const [giornoGrafico, setGiornoGrafico] = useState(primaSessioneId)
   const [sessioneSelezionata, setSessioneSelezionata] = useState(null)
+  const [giornoAggiunta, setGiornoAggiunta] = useState(null) // { giorno, data } per selettore sessione
 
   const oggiStr = toLocalDateStr(new Date())
   const dateCompletate = new Map(sessioniCompletate.map((s) => [s.date, s]))
@@ -183,16 +187,26 @@ export default function Storico() {
                         ? (sessionColorMap[sessione.dayId] || 'bg-blue-600')
                         : null
 
-                      const El = sessione ? 'button' : 'div'
+                      // I giorni passati (o oggi) senza sessione sono tappabili per aggiungere
+                      const puoiAggiungere = !sessione && !isFuturo && !(isOggi && activeSession)
+                      const El = (sessione || puoiAggiungere) ? 'button' : 'div'
                       return (
                         <El
                           key={data}
-                          onClick={sessione ? () => setSessioneSelezionata(sessione) : undefined}
-                          className={`aspect-square rounded-lg flex items-center justify-center transition-all ${
+                          onClick={
+                            sessione
+                              ? () => setSessioneSelezionata(sessione)
+                              : puoiAggiungere
+                              ? () => setGiornoAggiunta({ giorno, data })
+                              : undefined
+                          }
+                          className={`aspect-square rounded-lg flex items-center justify-center transition-all relative ${
                             dotColor
                               ? dotColor + ' active:scale-90 cursor-pointer'
                               : isFuturo
                               ? 'bg-transparent'
+                              : puoiAggiungere
+                              ? 'bg-gray-800/40 active:scale-90 active:bg-gray-700/70'
                               : 'bg-gray-800/60'
                           } ${isOggi ? 'ring-2 ring-white/70 ring-offset-1 ring-offset-gray-950' : ''}`}
                         >
@@ -209,6 +223,9 @@ export default function Storico() {
                           >
                             {giorno}
                           </span>
+                          {puoiAggiungere && (
+                            <span className="absolute top-0.5 right-1 text-[8px] leading-none text-gray-600">+</span>
+                          )}
                         </El>
                       )
                     })}
@@ -258,7 +275,61 @@ export default function Storico() {
         <SessionePassataModal
           sessione={sessioneSelezionata}
           onClose={() => setSessioneSelezionata(null)}
+          onElimina={(id) => {
+            eliminaSessionePassata(id)
+            setSessioneSelezionata(null)
+          }}
         />
+      )}
+
+      {/* Selettore sessione per aggiunta manuale */}
+      {giornoAggiunta && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/70 flex items-end"
+          onClick={(e) => e.target === e.currentTarget && setGiornoAggiunta(null)}
+        >
+          <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-bold text-white">Aggiungi allenamento</h2>
+              <button
+                onClick={() => setGiornoAggiunta(null)}
+                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mb-4 capitalize">
+              {(() => {
+                const [a, m, g] = giornoAggiunta.data.split('-').map(Number)
+                return new Date(a, m - 1, g).toLocaleDateString('it-IT', {
+                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                })
+              })()}
+            </p>
+            <p className="text-xs text-gray-500 mb-3">Quale sessione hai svolto?</p>
+            <div className={`grid gap-2 ${
+              (schedaAttiva?.sessioni?.length || 0) <= 3 ? 'grid-cols-3' : 'grid-cols-2'
+            }`}>
+              {(schedaAttiva?.sessioni || []).map((sess) => {
+                const sessColori = (COLORI_SESSIONE[sess.colore] || COLORI_SESSIONE.blue)
+                return (
+                  <button
+                    key={sess.id}
+                    onClick={() => {
+                      const nuova = aggiungiSessionePassata(giornoAggiunta.data, sess.id)
+                      setGiornoAggiunta(null)
+                      setSessioneSelezionata(nuova)
+                    }}
+                    className={`py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all ${sessColori.pill}`}
+                  >
+                    <span>{sess.emoji}</span>
+                    <span>{sess.nome}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

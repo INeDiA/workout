@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { X, Save } from 'lucide-react'
+import { X, Save, Trash2 } from 'lucide-react'
 import ExerciseCard from './ExerciseCard'
 import { useApp } from '../context/AppContext'
 
-export default function SessionePassataModal({ sessione, onClose }) {
+export default function SessionePassataModal({ sessione, onClose, onElimina }) {
   const { workoutData, modificaSessionePassata } = useApp()
 
   // Copia locale modificabile dei dati registrati
@@ -12,6 +12,7 @@ export default function SessionePassataModal({ sessione, onClose }) {
   )
   const [dirty, setDirty] = useState(false)
   const [salvato, setSalvato] = useState(false)
+  const [confermaElimina, setConfermaElimina] = useState(false)
 
   const giorno = workoutData[sessione.dayId]
 
@@ -96,7 +97,7 @@ export default function SessionePassataModal({ sessione, onClose }) {
         </div>
 
         {/* Footer salvataggio */}
-        <div className="px-5 pt-3 pb-8 border-t border-gray-800 flex-shrink-0">
+        <div className="px-5 pt-3 pb-8 border-t border-gray-800 flex-shrink-0 space-y-2">
           <button
             onClick={handleSalva}
             disabled={!dirty}
@@ -111,6 +112,24 @@ export default function SessionePassataModal({ sessione, onClose }) {
             <Save size={16} />
             {salvato ? 'Salvato' : 'Salva modifiche'}
           </button>
+
+          {onElimina && (
+            <button
+              onClick={() => {
+                if (!confermaElimina) { setConfermaElimina(true); return }
+                onElimina(sessione.id)
+              }}
+              onBlur={() => setConfermaElimina(false)}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl text-sm font-medium transition-all active:scale-98 border ${
+                confermaElimina
+                  ? 'bg-red-950 border-red-800 text-red-300'
+                  : 'bg-transparent border-gray-800 text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              <Trash2 size={14} />
+              {confermaElimina ? 'Conferma eliminazione' : 'Elimina allenamento'}
+            </button>
+          )}
         </div>
       </div>
     </div>

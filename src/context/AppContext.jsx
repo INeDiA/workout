@@ -147,6 +147,26 @@ export function AppProvider({ children }) {
     )
   }
 
+  function aggiungiSessionePassata(data, dayId) {
+    const nuova = {
+      id: Date.now().toString(),
+      date: data,
+      dayId,
+      completed: true,
+      exercises: {},
+      nutrition: { pre: false, integratori: false, post: false, note: '' },
+    }
+    setSessions((prev) => {
+      const altre = prev.filter((s) => s.date !== data)
+      return [...altre, nuova].sort((a, b) => a.date.localeCompare(b.date))
+    })
+    return nuova
+  }
+
+  function eliminaSessionePassata(sessionId) {
+    setSessions((prev) => prev.filter((s) => s.id !== sessionId))
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -184,6 +204,8 @@ export function AppProvider({ children }) {
         completaSessione,
         abbandonaSessione,
         modificaSessionePassata,
+        aggiungiSessionePassata,
+        eliminaSessionePassata,
       }}
     >
       {children}
