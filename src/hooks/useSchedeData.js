@@ -6,41 +6,6 @@ function generaId() {
   return Date.now().toString() + Math.random().toString(36).slice(2)
 }
 
-// Rinomina sessioni default se hanno ancora i vecchi nomi "Giorno A/B/C"
-// Idempotente: se i nomi sono già corretti non cambia nulla.
-function migraV2NomiSessioni(schede) {
-  const mappa = { 'Giorno A': 'Push', 'Giorno B': 'Pull', 'Giorno C': 'Legs' }
-  let modified = false
-  const aggiornate = schede.map((scheda) => ({
-    ...scheda,
-    sessioni: scheda.sessioni.map((sess) => {
-      if (mappa[sess.nome]) {
-        modified = true
-        return { ...sess, nome: mappa[sess.nome] }
-      }
-      return sess
-    }),
-  }))
-  return modified ? aggiornate : schede
-}
-
-// Corregge le emoji di Push (💪→🏋️) e Pull (🏋️→💪)
-// Idempotente: se le emoji sono già corrette non cambia nulla.
-function migraV3Emoji(schede) {
-  const mappa = { Push: '🏋️', Pull: '💪' }
-  let modified = false
-  const aggiornate = schede.map((scheda) => ({
-    ...scheda,
-    sessioni: scheda.sessioni.map((sess) => {
-      if (mappa[sess.nome] && sess.emoji !== mappa[sess.nome]) {
-        modified = true
-        return { ...sess, emoji: mappa[sess.nome] }
-      }
-      return sess
-    }),
-  }))
-  return modified ? aggiornate : schede
-}
 
 // Migra i dati dal vecchio formato sm_workout al nuovo formato multi-scheda
 function migraVecchiDati() {
@@ -83,12 +48,7 @@ export function useSchedeData() {
     try {
       const stored = localStorage.getItem('sm_schede')
       if (!stored) return null
-      let data = JSON.parse(stored)
-      // Applica migrazioni in sequenza
-      data = migraV2NomiSessioni(data)
-      data = migraV3Emoji(data)
-      localStorage.setItem('sm_schede', JSON.stringify(data))
-      return data
+      return JSON.parse(stored)
     } catch {
       return null
     }
