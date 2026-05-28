@@ -205,11 +205,13 @@ export function useSchedeData() {
         if (s.id !== schedaId) return s
         return {
           ...s,
-          sessioni: s.sessioni.map((sess) =>
-            sess.id === sessioneId
-              ? { ...sess, esercizi: [...sess.esercizi, { ...esercizio, id }] }
-              : sess
-          ),
+          sessioni: s.sessioni.map((sess) => {
+            // Se isShared, aggiunge a tutte le sessioni con lo stesso id
+            if (esercizio.isShared || sess.id === sessioneId) {
+              return { ...sess, esercizi: [...sess.esercizi, { ...esercizio, id }] }
+            }
+            return sess
+          }),
         }
       })
     )
@@ -219,18 +221,63 @@ export function useSchedeData() {
     setSchede((prev) =>
       (prev || schedeEffettive).map((s) => {
         if (s.id !== schedaId) return s
+
+        // Stato precedente dell'esercizio per gestire il toggle isShared
+        const sessOriginale = s.sessioni.find((sess) => sess.id === sessioneId)
+        const esOriginal = sessOriginale?.esercizi.find((e) => e.id === esercizioId)
+        const eraShared = esOriginal?.isShared ?? false
+        const saràShared = dati.isShared ?? eraShared
+
         return {
           ...s,
-          sessioni: s.sessioni.map((sess) =>
-            sess.id === sessioneId
-              ? {
+          sessioni: s.sessioni.map((sess) => {
+            if (eraShared && saràShared) {
+              // Rimane shared: aggiorna in tutte le sessioni
+              return {
+                ...sess,
+                esercizi: sess.esercizi.map((e) =>
+                  e.id === esercizioId ? { ...e, ...dati } : e
+                ),
+              }
+            }
+            if (!eraShared && saràShared) {
+              // Diventa shared: aggiorna nella sessione corrente, propaga alle altre
+              if (sess.id === sessioneId) {
+                return {
                   ...sess,
                   esercizi: sess.esercizi.map((e) =>
                     e.id === esercizioId ? { ...e, ...dati } : e
                   ),
                 }
-              : sess
-          ),
+              }
+              // Aggiunge solo se non già presente (stesso id)
+              if (sess.esercizi.some((e) => e.id === esercizioId)) return sess
+              return {
+                ...sess,
+                esercizi: [...sess.esercizi, { ...esOriginal, ...dati }],
+              }
+            }
+            if (eraShared && !saràShared) {
+              // Non è più shared: rimuove dalle altre sessioni, aggiorna in quella corrente
+              if (sess.id === sessioneId) {
+                return {
+                  ...sess,
+                  esercizi: sess.esercizi.map((e) =>
+                    e.id === esercizioId ? { ...e, ...dati } : e
+                  ),
+                }
+              }
+              return { ...sess, esercizi: sess.esercizi.filter((e) => e.id !== esercizioId) }
+            }
+            // Non era e rimane non-shared: solo sessione corrente
+            if (sess.id !== sessioneId) return sess
+            return {
+              ...sess,
+              esercizi: sess.esercizi.map((e) =>
+                e.id === esercizioId ? { ...e, ...dati } : e
+              ),
+            }
+          }),
         }
       })
     )
@@ -240,13 +287,19 @@ export function useSchedeData() {
     setSchede((prev) =>
       (prev || schedeEffettive).map((s) => {
         if (s.id !== schedaId) return s
+
+        const sessOriginale = s.sessioni.find((sess) => sess.id === sessioneId)
+        const isShared = sessOriginale?.esercizi.find((e) => e.id === esercizioId)?.isShared
+
         return {
           ...s,
-          sessioni: s.sessioni.map((sess) =>
-            sess.id === sessioneId
-              ? { ...sess, esercizi: sess.esercizi.filter((e) => e.id !== esercizioId) }
-              : sess
-          ),
+          sessioni: s.sessioni.map((sess) => {
+            // Se shared, rimuove da tutte le sessioni
+            if (isShared || sess.id === sessioneId) {
+              return { ...sess, esercizi: sess.esercizi.filter((e) => e.id !== esercizioId) }
+            }
+            return sess
+          }),
         }
       })
     )
