@@ -33,6 +33,7 @@ export default function Oggi() {
     aggiungiSessione,
     rinominaSessione,
     eliminaSessione,
+    abbandonaSessione,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
@@ -40,6 +41,7 @@ export default function Oggi() {
   const [showSettings, setShowSettings] = useState(false)
   const [showSchedeSheet, setShowSchedeSheet] = useState(false)
   const [confermaIncompleto, setConfermaIncompleto] = useState(false)
+  const [confermaAnnulla, setConfermaAnnulla] = useState(false)
   const [confermaReset, setConfermaReset] = useState(false)
   const [confermaEliminaSessione, setConfermaEliminaSessione] = useState(null)
 
@@ -447,11 +449,11 @@ export default function Oggi() {
           </button>
         )}
 
-        {/* Pulsante Completa */}
+        {/* Pulsante Completa + Annulla */}
         {activeSession && (
-          <div className="pt-2 pb-4">
+          <div className="pt-2 pb-4 space-y-2">
             {confermaIncompleto && (
-              <div className="flex items-start gap-2 bg-amber-950 border border-amber-800 rounded-xl p-3 mb-3">
+              <div className="flex items-start gap-2 bg-amber-950 border border-amber-800 rounded-xl p-3">
                 <AlertTriangle size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-300">
                   Hai completato solo il {percentuale}% delle serie. Vuoi concludere comunque?
@@ -470,6 +472,22 @@ export default function Oggi() {
             >
               {percentuale >= 100 ? <Award size={20} /> : <CheckCircle size={20} />}
               {confermaIncompleto ? 'Sì, concludi comunque' : 'Completa Allenamento'}
+            </button>
+
+            {/* Annulla sessione */}
+            <button
+              onClick={() => {
+                if (!confermaAnnulla) { setConfermaAnnulla(true); return }
+                abbandonaSessione()
+              }}
+              onBlur={() => setConfermaAnnulla(false)}
+              className={`w-full py-3 rounded-2xl text-sm font-medium transition-all active:scale-98 border ${
+                confermaAnnulla
+                  ? 'bg-red-950 border-red-800 text-red-300'
+                  : 'bg-transparent border-gray-800 text-gray-600 hover:text-gray-400'
+              }`}
+            >
+              {confermaAnnulla ? 'Conferma: annulla e scarta i dati' : 'Annulla allenamento'}
             </button>
           </div>
         )}
