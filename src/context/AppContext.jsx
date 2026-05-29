@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from 'react'
 import { useLocalStorage } from '../hooks/useStorage'
 import { useSchedeData } from '../hooks/useSchedeData'
+import { autoBackupToDrive } from '../utils/googleDrive'
 
 const AppContext = createContext(null)
 
@@ -136,6 +137,7 @@ export function AppProvider({ children }) {
       return [...altre, completata]
     })
     setActiveSession(null)
+    autoBackupToDrive() // fire-and-forget, fallisce silenziosamente se Drive non è connesso
   }
 
   function abbandonaSessione() {

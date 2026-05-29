@@ -1,7 +1,9 @@
 import { useState, useRef } from 'react'
-import { X, ChevronRight, AlertTriangle, Upload, Share2 } from 'lucide-react'
+import { X, ChevronRight, AlertTriangle, Upload, Share2, CloudUpload, CloudDownload, Unlink, RefreshCw } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { backupNecessario } from '../utils/backup'
+import { useGoogleAuth } from '../hooks/useGoogleAuth'
+import { uploadBackup, downloadBackup } from '../utils/googleDrive'
 
 const DURATE_TIMER = [60, 90, 120, 150, 180]
 const CHIAVI_BACKUP = ['sm_sessions', 'sm_schede', 'sm_scheda_attiva_id', 'sm_esercizi_custom', 'sm_settings']
@@ -11,6 +13,54 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
   const [passoReset, setPassoReset] = useState(0)
   const [erroreImport, setErroreImport] = useState(null)
   const inputFileRef = useRef(null)
+
+  const { tokenData, tokenValido, connetti, scollega } = useGoogleAuth()
+  const [driveLoading, setDriveLoading] = useState(false)
+  const [driveError, setDriveError] = useState(null)
+  const [driveSuccess, setDriveSuccess] = useState(null)
+
+  async function collegaDrive() {
+    setDriveError(null)
+    try {
+      setDriveLoading(true)
+      await connetti()
+    } catch (e) {
+      if (e?.error !== 'access_denied') setDriveError('Connessione annullata o non riuscita.')
+    } finally {
+      setDriveLoading(false)
+    }
+  }
+
+  async function backupOra() {
+    if (!tokenData) return
+    setDriveLoading(true); setDriveError(null); setDriveSuccess(null)
+    try {
+      await uploadBackup(tokenData.access_token)
+      setDriveSuccess('Backup completato.')
+    } catch {
+      setDriveError('Backup fallito. Riprova.')
+    } finally {
+      setDriveLoading(false)
+    }
+  }
+
+  async function ripristinaDaDrive() {
+    if (!tokenData) return
+    setDriveLoading(true); setDriveError(null); setDriveSuccess(null)
+    try {
+      const dati = await downloadBackup(tokenData.access_token)
+      if (!dati._version) throw new Error('formato non valido')
+      const CHIAVI = ['sm_sessions', 'sm_schede', 'sm_scheda_attiva_id', 'sm_esercizi_custom', 'sm_settings']
+      for (const k of CHIAVI) {
+        if (dati[k] !== undefined) localStorage.setItem(k, JSON.stringify(dati[k]))
+      }
+      window.location.reload()
+    } catch {
+      setDriveError('Ripristino fallito. Verifica che esista un backup su Drive.')
+    } finally {
+      setDriveLoading(false)
+    }
+  }
 
   const ultimoBackup = localStorage.getItem('sm_ultimo_backup')
   const ultimoBackupStr = ultimoBackup
@@ -176,6 +226,92 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* ── Cloud Backup ─────────────────────────────────────── */}
+            <div className="border-t border-gray-800 pt-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Cloud Backup</p>
+
+              {/* Non connesso */}
+              {!tokenData && (
+                <button
+                  onClick={collegaDrive}
+                  disabled={driveLoading}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
+                >
+                  <CloudUpload size={15} />
+                  {driveLoading ? 'Connessione…' : 'Collega Google Drive'}
+                </button>
+              )}
+
+              {/* Connesso ma token scaduto */}
+              {tokenData && !tokenValido && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2.5">
+                    <AlertTriangle size={13} className="text-amber-400 flex-shrink-0" />
+                    <p className="text-xs text-amber-300">Sessione scaduta — ricollegati per continuare il backup automatico.</p>
+                  </div>
+                  <button
+                    onClick={collegaDrive}
+                    disabled={driveLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} />
+                    {driveLoading ? 'Connessione…' : 'Ricollegati a Google Drive'}
+                  </button>
+                </div>
+              )}
+
+              {/* Connesso e valido */}
+              {tokenData && tokenValido && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5">
+                    <div>
+                      <p className="text-xs font-medium text-white">✓ {tokenData.email}</p>
+                      {ultimoBackup && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Ultimo backup: {new Date(ultimoBackup).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={scollega}
+                      className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors"
+                      title="Scollega"
+                    >
+                      <Unlink size={14} />
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={backupOra}
+                      disabled={driveLoading}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
+                    >
+                      <CloudUpload size={13} />
+                      {driveLoading ? '…' : 'Backup ora'}
+                    </button>
+                    <button
+                      onClick={ripristinaDaDrive}
+                      disabled={driveLoading}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
+                    >
+                      <CloudDownload size={13} />
+                      {driveLoading ? '…' : 'Ripristina'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {driveSuccess && (
+                <p className="text-xs text-green-400 mt-2">{driveSuccess}</p>
+              )}
+              {driveError && (
+                <div className="flex items-start gap-2 bg-red-950 border border-red-800 rounded-xl p-3 mt-2">
+                  <AlertTriangle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-red-300">{driveError}</p>
+                </div>
+              )}
             </div>
 
             {/* ── Backup ───────────────────────────────────────────── */}

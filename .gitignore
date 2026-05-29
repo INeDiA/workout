@@ -15,6 +15,10 @@ dist-ssr
 # Claude Code config
 .claude/
 
+# Environment variables (contengono segreti — non committare)
+.env
+.env.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
