@@ -5,7 +5,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/scheda-allenamento/',
+  base: '/workout/',
   plugins: [
     react(),
     tailwindcss(),
@@ -20,8 +20,8 @@ export default defineConfig({
         background_color: '#030712',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/scheda-allenamento/',
-        scope: '/scheda-allenamento/',
+        start_url: '/workout/',
+        scope: '/workout/',
         icons: [
           {
             src: 'icons/icon-192.png',
@@ -39,7 +39,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/scheda-allenamento/index.html',
+        navigateFallback: '/workout/index.html',
         skipWaiting: true,
         clientsClaim: true,
       },

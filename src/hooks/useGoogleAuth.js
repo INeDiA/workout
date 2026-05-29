@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file'
 
-// Redirect URI = origine + base path dell'app (es. https://inedia.github.io/scheda-allenamento/)
+// Redirect URI = origine + base path dell'app (es. https://inedia.github.io/workout/)
 function getRedirectUri() {
   return window.location.origin + import.meta.env.BASE_URL
 }
