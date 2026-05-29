@@ -53,7 +53,7 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
       className="fixed inset-0 z-[60] bg-black/70 flex items-end"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10 max-h-[92vh] flex flex-col">
+      <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10 max-h-[92dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <h2 className="text-lg font-bold text-white">Aggiungi esercizio</h2>

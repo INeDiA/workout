@@ -62,7 +62,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
       className="fixed inset-0 z-[60] bg-black/70 flex items-end"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-safe max-h-[92vh] overflow-y-auto">
+      <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-safe max-h-[92dvh] overflow-y-auto">
         {/* Intestazione */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">
