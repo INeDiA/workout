@@ -225,150 +225,81 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
               </div>
             </div>
 
-            {/* ── Cloud Backup ─────────────────────────────────────── */}
+            {/* ── Backup ───────────────────────────────────────────── */}
             <div className="border-t border-gray-800 pt-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Cloud Backup</p>
+              <div className="flex items-baseline justify-between mb-3">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Backup</p>
+                {ultimoBackupStr && <p className="text-xs text-gray-600">{ultimoBackupStr}</p>}
+              </div>
 
-              {/* Non connesso */}
-              {!tokenData && (
+              {/* Warning backup scaduto — solo se Drive non è attivo */}
+              {backupNecessario() && !(tokenData && tokenValido) && (
                 <button
-                  onClick={collegaDrive}
-                  disabled={driveLoading}
-                  className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
+                  onClick={esportaDati}
+                  className="w-full flex items-center gap-3 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2.5 text-left active:scale-98 transition-all mb-2"
                 >
-                  <CloudUpload size={15} />
-                  Collega Google Drive
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                  <p className="text-xs text-amber-300">
+                    {ultimoBackup ? 'Ultimo backup > 30 giorni fa. Tocca per esportare.' : 'Nessun backup. Tocca per esportare.'}
+                  </p>
                 </button>
               )}
 
-              {/* Connesso ma token scaduto */}
+              {/* Drive: token scaduto */}
               {tokenData && !tokenValido && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2.5">
-                    <AlertTriangle size={13} className="text-amber-400 flex-shrink-0" />
-                    <p className="text-xs text-amber-300">Sessione scaduta — ricollegati per continuare il backup automatico.</p>
-                  </div>
-                  <button
-                    onClick={collegaDrive}
-                    disabled={driveLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
-                  >
-                    <RefreshCw size={14} />
-                    Ricollegati a Google Drive
+                <div className="flex items-center gap-2 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2 mb-2">
+                  <AlertTriangle size={12} className="text-amber-400 flex-shrink-0" />
+                  <p className="text-xs text-amber-300 flex-1">Sessione Drive scaduta</p>
+                  <button onClick={collegaDrive} className="text-xs font-medium text-amber-200 underline">Ricollegati</button>
+                </div>
+              )}
+
+              {/* Drive: connesso */}
+              {tokenData && tokenValido && (
+                <div className="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 mb-2">
+                  <p className="text-xs text-white">☁ {tokenData.email}</p>
+                  <button onClick={scollega} className="p-1 text-gray-500 hover:text-red-400 rounded transition-colors">
+                    <Unlink size={13} />
                   </button>
                 </div>
               )}
 
-              {/* Connesso e valido */}
-              {tokenData && tokenValido && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5">
-                    <div>
-                      <p className="text-xs font-medium text-white">✓ {tokenData.email}</p>
-                      {ultimoBackup && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Ultimo backup: {new Date(ultimoBackup).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={scollega}
-                      className="p-1.5 text-gray-500 hover:text-red-400 rounded-lg hover:bg-gray-700 transition-colors"
-                      title="Scollega"
-                    >
-                      <Unlink size={14} />
+              {/* Pulsanti azioni */}
+              <div className="grid grid-cols-2 gap-2">
+                {tokenData && tokenValido ? (
+                  <>
+                    <button onClick={backupOra} disabled={driveLoading}
+                      className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50">
+                      <CloudUpload size={13} />{driveLoading ? '…' : 'Backup'}
                     </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={backupOra}
-                      disabled={driveLoading}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
-                    >
-                      <CloudUpload size={13} />
-                      {driveLoading ? '…' : 'Backup ora'}
+                    <button onClick={ripristinaDaDrive} disabled={driveLoading}
+                      className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50">
+                      <CloudDownload size={13} />{driveLoading ? '…' : 'Ripristina'}
                     </button>
-                    <button
-                      onClick={ripristinaDaDrive}
-                      disabled={driveLoading}
-                      className="flex-1 flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50"
-                    >
-                      <CloudDownload size={13} />
-                      {driveLoading ? '…' : 'Ripristina'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {driveSuccess && (
-                <p className="text-xs text-green-400 mt-2">{driveSuccess}</p>
-              )}
-              {driveError && (
-                <div className="flex items-start gap-2 bg-red-950 border border-red-800 rounded-xl p-3 mt-2">
-                  <AlertTriangle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-300">{driveError}</p>
-                </div>
-              )}
-            </div>
-
-            {/* ── Backup ───────────────────────────────────────────── */}
-            <div className="border-t border-gray-800 pt-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Backup dati</p>
-              {ultimoBackupStr && (
-                <p className="text-xs text-gray-600 mb-3">Ultimo backup: {ultimoBackupStr}</p>
-              )}
-              {!ultimoBackupStr && (
-                <p className="text-xs text-gray-600 mb-3">Nessun backup effettuato su questo dispositivo.</p>
-              )}
-
-              {backupNecessario() && (
-                <button
-                  onClick={esportaDati}
-                  className="w-full flex items-start gap-3 bg-amber-950 border border-amber-800 rounded-2xl px-4 py-3 text-left active:scale-98 transition-all mb-3"
-                >
-                  <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0 mt-1.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-amber-200">Fai un backup dei tuoi dati</p>
-                    <p className="text-xs text-amber-400 mt-0.5">
-                      {localStorage.getItem('sm_ultimo_backup')
-                        ? "L'ultimo backup risale a più di un mese fa. Tocca per esportare ora."
-                        : 'Non hai ancora salvato nessun backup. Tocca per esportare ora.'}
-                    </p>
-                  </div>
+                  </>
+                ) : (
+                  <button onClick={collegaDrive}
+                    className="col-span-2 flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
+                    <CloudUpload size={13} />Collega Google Drive
+                  </button>
+                )}
+                <button onClick={esportaDati}
+                  className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
+                  <Share2 size={13} />Esporta
                 </button>
-              )}
-
-              <div className="flex gap-2">
-                {/* Esporta / Condividi */}
-                <button
-                  onClick={esportaDati}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98"
-                >
-                  <Share2 size={15} />
-                  Esporta
+                <button onClick={() => inputFileRef.current?.click()}
+                  className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
+                  <Upload size={13} />Importa
                 </button>
-
-                {/* Importa */}
-                <button
-                  onClick={() => inputFileRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-2xl py-3 text-sm font-medium text-white transition-colors active:scale-98"
-                >
-                  <Upload size={15} />
-                  Importa
-                </button>
-                <input
-                  ref={inputFileRef}
-                  type="file"
-                  accept=".json,application/json"
-                  className="hidden"
-                  onChange={handleFileImport}
-                />
               </div>
 
-              {erroreImport && (
+              <input ref={inputFileRef} type="file" accept=".json,application/json" className="hidden" onChange={handleFileImport} />
+
+              {driveSuccess && <p className="text-xs text-green-400 mt-2">{driveSuccess}</p>}
+              {(driveError || erroreImport) && (
                 <div className="flex items-start gap-2 bg-red-950 border border-red-800 rounded-xl p-3 mt-2">
                   <AlertTriangle size={13} className="text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-red-300">{erroreImport}</p>
+                  <p className="text-xs text-red-300">{driveError || erroreImport}</p>
                 </div>
               )}
             </div>
