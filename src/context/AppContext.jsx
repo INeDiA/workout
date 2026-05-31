@@ -1,6 +1,7 @@
-import { createContext, useContext, useMemo } from 'react'
+import { createContext, useContext, useMemo, useEffect } from 'react'
 import { useLocalStorage } from '../hooks/useStorage'
 import { useSchedeData } from '../hooks/useSchedeData'
+import { useTimer } from '../hooks/useTimer'
 import { autoBackup } from '../utils/googleDrive'
 
 const AppContext = createContext(null)
@@ -19,6 +20,10 @@ export function AppProvider({ children }) {
   const [sessions, setSessions] = useLocalStorage('sm_sessions', [])
   const [activeSession, setActiveSession] = useLocalStorage('sm_active_session', null)
   const [settings, setSettings] = useLocalStorage('sm_settings', { timerDuration: 90, giorniSettimana: 3 })
+
+  // Timer a livello di context — persiste attraverso i cambi di tab
+  const timer = useTimer(settings.timerDuration)
+  useEffect(() => { timer.changeDuration(settings.timerDuration) }, [settings.timerDuration]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const schedeData = useSchedeData()
   const {
@@ -201,6 +206,8 @@ export function AppProvider({ children }) {
         rimuoviEsercizio,
         riordinaEsercizi,
         resetSchedaDefault,
+        // Timer
+        timer,
         // Sessione workout
         iniziaSessione,
         aggiornaEsercizio,

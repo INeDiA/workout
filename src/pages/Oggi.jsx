@@ -10,7 +10,6 @@ import SettingsSheet from '../components/SettingsSheet'
 import SchedeSheet from '../components/SchedeSheet'
 import SessionEditModal from '../components/SessionEditModal'
 import { useWakeLock } from '../hooks/useWakeLock'
-import { useTimer } from '../hooks/useTimer'
 import { useEserciziCustom } from '../components/ExercisePicker'
 import { COLORI_SESSIONE } from '../data/workout'
 
@@ -35,6 +34,7 @@ export default function Oggi() {
     rinominaSessione,
     eliminaSessione,
     abbandonaSessione,
+    timer,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
@@ -123,9 +123,6 @@ export default function Oggi() {
 
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
-
-  // Timer recupero
-  const timer = useTimer(settings.timerDuration)
 
   // Giorno effettivo
   const giornoEffettivo = giornoOverride ?? giornoOggi ?? ordineSessioni[0]

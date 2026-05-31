@@ -24,6 +24,9 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions }) 
     })
     .filter((d) => d.peso !== null)
 
+  // PR = massimo storico assoluto tra tutti i punti visualizzati
+  const pr = data.length > 0 ? Math.max(...data.map((d) => d.peso)) : null
+
   if (data.length < 2) {
     return (
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
@@ -39,7 +42,15 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions }) 
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-      <p className="text-sm font-semibold text-white mb-3">{nomeEsercizio}</p>
+      {/* Header con nome esercizio e PR */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-white truncate">{nomeEsercizio}</p>
+        {pr && (
+          <span className="text-xs font-semibold text-amber-400 flex-shrink-0 ml-2">
+            PR {pr} kg
+          </span>
+        )}
+      </div>
       <ResponsiveContainer width="100%" height={110}>
         <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
@@ -63,16 +74,47 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions }) 
               padding: '6px 10px',
             }}
             labelStyle={{ color: '#9ca3af', fontSize: 11 }}
-            itemStyle={{ color: '#3b82f6', fontSize: 12, fontWeight: 600 }}
-            formatter={(val) => [`${val} kg`, 'Peso max']}
+            itemStyle={{ fontSize: 12, fontWeight: 600 }}
+            formatter={(val) => {
+              const isPR = val === pr
+              return [
+                <span style={{ color: isPR ? '#f59e0b' : '#3b82f6' }}>
+                  {val} kg{isPR ? ' 🏆' : ''}
+                </span>,
+                'Peso max',
+              ]
+            }}
           />
           <Line
             type="monotone"
             dataKey="peso"
             stroke="#3b82f6"
             strokeWidth={2}
-            dot={{ fill: '#3b82f6', r: 3, strokeWidth: 0 }}
-            activeDot={{ r: 5, strokeWidth: 0 }}
+            dot={(dotProps) => {
+              const { cx, cy, payload } = dotProps
+              const isPR = payload.peso === pr
+              return (
+                <circle
+                  key={`dot-${cx}`}
+                  cx={cx} cy={cy}
+                  r={isPR ? 5 : 3}
+                  fill={isPR ? '#f59e0b' : '#3b82f6'}
+                  stroke={isPR ? '#f59e0b' : '#3b82f6'}
+                  strokeWidth={0}
+                />
+              )
+            }}
+            activeDot={(dotProps) => {
+              const { cx, cy, payload } = dotProps
+              return (
+                <circle
+                  key={`active-${cx}`}
+                  cx={cx} cy={cy} r={6}
+                  fill={payload.peso === pr ? '#f59e0b' : '#3b82f6'}
+                  strokeWidth={0}
+                />
+              )
+            }}
           />
         </LineChart>
       </ResponsiveContainer>

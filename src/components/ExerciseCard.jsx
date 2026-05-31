@@ -123,10 +123,10 @@ export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSeri
               {!isBodyweight && (
                 <div className="flex items-center gap-1 flex-1">
                   <input
-                    type="number"
+                    type="text"
                     inputMode="decimal"
                     value={s.weight}
-                    onChange={(e) => setPeso(idx, e.target.value)}
+                    onChange={(e) => setPeso(idx, e.target.value.replace(',', '.'))}
                     placeholder="—"
                     disabled={!attiva}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 disabled:opacity-50"
