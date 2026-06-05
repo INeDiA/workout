@@ -330,7 +330,7 @@ export default function Oggi() {
                     return (
                       <div key={id} className={`flex flex-col gap-1 ${spanClass}`}>
                         <button
-                          onClick={() => editMode ? (setSessioneModaleTarget(sess), setShowSessionModal(true)) : togglePill(id)}
+                          onClick={() => { togglePill(id); if (editMode) { setSessioneModaleTarget(sess); setShowSessionModal(true) } }}
                           className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
                             attivo
                               ? sessColori.pill + ' border-transparent shadow-md'
