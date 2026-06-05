@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 
 export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false, rightSlot, onCardClick }) {
@@ -14,6 +14,14 @@ export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSeri
   const serieCompletate = seriePiano.filter((s) => s.done).length
   const tutteCompletate = serieCompletate === serie
   const attiva = !!onAggiornaSerie
+
+  // Auto-collasso dopo 800ms quando tutte le serie sono completate (solo in sessione attiva)
+  useEffect(() => {
+    if (tutteCompletate && attiva && expanded) {
+      const t = setTimeout(() => setExpanded(false), 800)
+      return () => clearTimeout(t)
+    }
+  }, [tutteCompletate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleSerie(idx) {
     if (!attiva) return

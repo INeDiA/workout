@@ -1,5 +1,7 @@
 // Dati di esempio per la scheda — modificabili dall'utente nell'app
 
+// Palette colorblind-safe basata su Okabe-Ito:
+// blue · cyan · yellow · orange · rose — distinguibili in deuteranopia, protanopia e tritanopia
 export const COLORI_SESSIONE = {
   blue: {
     gradient: 'from-blue-900/30 to-gray-950',
@@ -8,37 +10,37 @@ export const COLORI_SESSIONE = {
     bar: 'bg-blue-500',
     dot: 'bg-blue-500',
   },
-  purple: {
-    gradient: 'from-purple-900/30 to-gray-950',
-    badge: 'bg-purple-950 text-purple-300 border border-purple-800',
-    pill: 'bg-purple-600 text-white',
-    bar: 'bg-purple-500',
-    dot: 'bg-purple-500',
+  cyan: {
+    gradient: 'from-cyan-900/30 to-gray-950',
+    badge: 'bg-cyan-950 text-cyan-300 border border-cyan-800',
+    pill: 'bg-cyan-600 text-white',
+    bar: 'bg-cyan-500',
+    dot: 'bg-cyan-500',
   },
-  green: {
-    gradient: 'from-green-900/30 to-gray-950',
-    badge: 'bg-green-950 text-green-300 border border-green-800',
-    pill: 'bg-green-600 text-white',
-    bar: 'bg-green-500',
-    dot: 'bg-green-500',
+  yellow: {
+    gradient: 'from-yellow-900/30 to-gray-950',
+    badge: 'bg-yellow-950 text-yellow-300 border border-yellow-800',
+    pill: 'bg-yellow-400 text-gray-900',
+    bar: 'bg-yellow-400',
+    dot: 'bg-yellow-400',
   },
   orange: {
     gradient: 'from-orange-900/30 to-gray-950',
     badge: 'bg-orange-950 text-orange-300 border border-orange-800',
-    pill: 'bg-orange-600 text-white',
+    pill: 'bg-orange-500 text-white',
     bar: 'bg-orange-500',
     dot: 'bg-orange-500',
   },
-  red: {
-    gradient: 'from-red-900/30 to-gray-950',
-    badge: 'bg-red-950 text-red-300 border border-red-800',
-    pill: 'bg-red-600 text-white',
-    bar: 'bg-red-500',
-    dot: 'bg-red-500',
+  rose: {
+    gradient: 'from-rose-900/30 to-gray-950',
+    badge: 'bg-rose-950 text-rose-300 border border-rose-800',
+    pill: 'bg-rose-600 text-white',
+    bar: 'bg-rose-500',
+    dot: 'bg-rose-500',
   },
 }
 
-export const COLORI_LISTA = ['blue', 'purple', 'green', 'orange', 'red']
+export const COLORI_LISTA = ['blue', 'cyan', 'yellow', 'orange', 'rose']
 
 export const GIORNI_DEFAULT = {
   A: {
