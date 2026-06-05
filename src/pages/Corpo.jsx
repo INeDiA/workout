@@ -2,7 +2,8 @@ import { useState, useCallback } from 'react'
 import { Scale, HeartPulse, Moon, Zap } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useStorage'
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, ComposedChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 
 // ── Utilità data locale ────────────────────────────────────────────────────────
@@ -55,7 +56,7 @@ const SONNO_MAX = 12
 
 export default function Corpo() {
   const { log: pesoLog, salva: salvaPeso } = usePesoLog()
-  const { oggiRecord, salva: salvaRecovery } = useRecoveryLog()
+  const { log: recoveryLog, oggiRecord, salva: salvaRecovery } = useRecoveryLog()
 
   // ── Peso ──────────────────────────────────────────────────────────────────
   const ultimoPeso = pesoLog.length > 0 ? pesoLog[pesoLog.length - 1] : null
@@ -70,6 +71,13 @@ export default function Corpo() {
   const pesoMin = pesoChartData.length > 0 ? Math.min(...pesoChartData.map(d => d.peso)) : null
 
   // ── Recovery ─────────────────────────────────────────────────────────────
+  const recoveryChartData = recoveryLog.slice(-14).map((e) => ({
+    data: e.date.slice(5).replace('-', '/'),
+    energia: e.energia ?? null,
+    dolori: e.dolori ?? null,
+    sonno: e.sonno ?? null,
+  }))
+
   const [energia, setEnergia] = useState(oggiRecord?.energia ?? null)
   const [sonno, setSonno] = useState(oggiRecord?.sonno ?? 7)
   const [dolori, setDolori] = useState(oggiRecord?.dolori ?? null)
@@ -289,6 +297,49 @@ export default function Corpo() {
             <p className="text-xs text-gray-600 text-right mt-3">Salvato automaticamente ✓</p>
           )}
         </div>
+
+        {/* ── Storico recovery ────────────────────────────────────────── */}
+        {recoveryChartData.length >= 2 && (
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+            <p className="text-sm font-semibold text-white mb-3">Storico recovery</p>
+            <ResponsiveContainer width="100%" height={130}>
+              <ComposedChart data={recoveryChartData} margin={{ top: 4, right: 8, bottom: 0, left: -24 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+                <XAxis dataKey="data" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis yAxisId="left" domain={[0, 5]} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} ticks={[1,2,3,4,5]} />
+                <YAxis yAxisId="right" orientation="right" domain={[4, 12]} tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8, padding: '6px 10px' }}
+                  labelStyle={{ color: '#9ca3af', fontSize: 11 }}
+                  itemStyle={{ fontSize: 11 }}
+                  formatter={(val, name) => {
+                    if (val === null) return ['-', name]
+                    const labels = { energia: 'Energia', dolori: 'Dolori', sonno: 'Sonno' }
+                    const suffix = name === 'sonno' ? ' ore' : '/5'
+                    return [`${val}${suffix}`, labels[name] || name]
+                  }}
+                />
+                <Bar yAxisId="right" dataKey="sonno" fill="#3b82f6" opacity={0.5} radius={[3, 3, 0, 0]} />
+                <Line yAxisId="left" type="monotone" dataKey="energia" stroke="#facc15" strokeWidth={2} dot={{ r: 3, fill: '#facc15', strokeWidth: 0 }} connectNulls />
+                <Line yAxisId="left" type="monotone" dataKey="dolori" stroke="#f43f5e" strokeWidth={2} dot={{ r: 3, fill: '#f43f5e', strokeWidth: 0 }} connectNulls />
+              </ComposedChart>
+            </ResponsiveContainer>
+            <div className="flex gap-4 mt-2 justify-center">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 bg-yellow-400 inline-block rounded" />
+                <span className="text-xs text-gray-500">Energia</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 bg-rose-500 inline-block rounded" />
+                <span className="text-xs text-gray-500">Dolori</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 bg-blue-500/50 inline-block rounded-sm" />
+                <span className="text-xs text-gray-500">Sonno</span>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
