@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2, GripVertical } from 'lucide-react'
+import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
 import { backupNecessario } from '../utils/backup'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
@@ -34,6 +34,7 @@ export default function Oggi() {
     rinominaSessione,
     eliminaSessione,
     abbandonaSessione,
+    riordinaSessioni,
     timer,
   } = useApp()
 
@@ -235,6 +236,14 @@ export default function Oggi() {
     setSessioneModaleTarget(null)
   }
 
+  function spostaSessione(idx, direction) {
+    const sessioni = [...(schedaAttiva?.sessioni || [])]
+    const targetIdx = idx + direction
+    if (targetIdx < 0 || targetIdx >= sessioni.length) return
+    ;[sessioni[idx], sessioni[targetIdx]] = [sessioni[targetIdx], sessioni[idx]]
+    riordinaSessioni(schedaAttiva.id, sessioni)
+  }
+
   function handleEliminaSessione(sessioneId) {
     if (confermaEliminaSessione === sessioneId) {
       eliminaSessione(schedaAttiva.id, sessioneId)
@@ -319,34 +328,48 @@ export default function Oggi() {
                       : ''
 
                     return (
-                      <button
-                        key={id}
-                        onClick={() => editMode ? (setSessioneModaleTarget(sess), setShowSessionModal(true)) : togglePill(id)}
-                        className={`${spanClass} flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
-                          attivo
-                            ? sessColori.pill + ' border-transparent shadow-md'
-                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
-                        }`}
-                      >
-                        {sess.emoji && <span>{sess.emoji}</span>}
-                        <span>{sess.nome}</span>
-                        {/* Pulsante elimina sessione in edit mode */}
+                      <div key={id} className={`flex flex-col gap-1 ${spanClass}`}>
+                        <button
+                          onClick={() => editMode ? (setSessioneModaleTarget(sess), setShowSessionModal(true)) : togglePill(id)}
+                          className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
+                            attivo
+                              ? sessColori.pill + ' border-transparent shadow-md'
+                              : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                          }`}
+                        >
+                          {sess.emoji && <span>{sess.emoji}</span>}
+                          <span>{sess.nome}</span>
+                          {editMode && (schedaAttiva?.sessioni?.length || 0) > 1 && (
+                            <span
+                              onClick={(e) => { e.stopPropagation(); handleEliminaSessione(id) }}
+                              className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                                confermaEliminaSessione === id
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-black/30 text-white/70 hover:bg-red-600'
+                              }`}
+                            >×</span>
+                          )}
+                        </button>
+                        {/* Frecce riordino sessioni in edit mode */}
                         {editMode && (schedaAttiva?.sessioni?.length || 0) > 1 && (
-                          <span
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEliminaSessione(id)
-                            }}
-                            className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
-                              confermaEliminaSessione === id
-                                ? 'bg-red-600 text-white'
-                                : 'bg-black/30 text-white/70 hover:bg-red-600'
-                            }`}
-                          >
-                            ×
-                          </span>
+                          <div className="flex justify-between px-0.5">
+                            <button
+                              onClick={() => spostaSessione(idx, -1)}
+                              disabled={idx === 0}
+                              className="p-1 text-gray-500 hover:text-white disabled:opacity-0 transition-colors active:scale-90 rounded-lg"
+                            >
+                              <ChevronLeft size={14} />
+                            </button>
+                            <button
+                              onClick={() => spostaSessione(idx, 1)}
+                              disabled={idx === ordineSessioni.length - 1}
+                              className="p-1 text-gray-500 hover:text-white disabled:opacity-0 transition-colors active:scale-90 rounded-lg"
+                            >
+                              <ChevronRight size={14} />
+                            </button>
+                          </div>
                         )}
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

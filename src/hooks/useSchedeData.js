@@ -196,6 +196,14 @@ export function useSchedeData() {
     )
   }
 
+  function riordinaSessioni(schedaId, nuoveSessioni) {
+    setSchede((prev) =>
+      (prev || schedeEffettive).map((s) =>
+        s.id === schedaId ? { ...s, sessioni: nuoveSessioni } : s
+      )
+    )
+  }
+
   // ── Esercizi ─────────────────────────────────────────────────────────────────
 
   function aggiungiEsercizio(schedaId, sessioneId, esercizio) {
@@ -347,6 +355,7 @@ export function useSchedeData() {
     modificaEsercizio,
     rimuoviEsercizio,
     riordinaEsercizi,
+    riordinaSessioni,
     resetSchedaDefault,
   }
 }

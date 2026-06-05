@@ -42,6 +42,7 @@ export function AppProvider({ children }) {
     modificaEsercizio,
     rimuoviEsercizio,
     riordinaEsercizi,
+    riordinaSessioni,
     resetSchedaDefault,
   } = schedeData
 
@@ -205,6 +206,7 @@ export function AppProvider({ children }) {
         modificaEsercizio,
         rimuoviEsercizio,
         riordinaEsercizi,
+        riordinaSessioni,
         resetSchedaDefault,
         // Timer
         timer,
