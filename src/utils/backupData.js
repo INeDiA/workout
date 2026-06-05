@@ -4,6 +4,8 @@ export const CHIAVI_BACKUP = [
   'sm_scheda_attiva_id',
   'sm_esercizi_custom',
   'sm_settings',
+  'sm_peso_log',
+  'sm_recovery_log',
 ]
 
 export const BACKUP_FILE_NAME = 'allenamento-backup.json'

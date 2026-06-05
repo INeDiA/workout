@@ -5,7 +5,7 @@ import InstallBanner from './components/InstallBanner'
 import TimerPill from './components/TimerPill'
 import Oggi from './pages/Oggi'
 import Storico from './pages/Storico'
-import Nutrizione from './pages/Nutrizione'
+import Corpo from './pages/Corpo'
 
 function AppContent() {
   const [tab, setTab] = useState('oggi')
@@ -18,7 +18,7 @@ function AppContent() {
       {/* Rendering condizionale dei tab — solo il tab attivo è montato */}
       {tab === 'oggi' && <Oggi />}
       {tab === 'storico' && <Storico />}
-      {tab === 'nutrizione' && <Nutrizione />}
+      {tab === 'nutrizione' && <Corpo />}
 
       {/* Pill timer visibile sugli altri tab durante una sessione attiva */}
       {activeSession && tab !== 'oggi' && (
