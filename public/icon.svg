@@ -1,44 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#030712"/>
-    </linearGradient>
-    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#1d4ed8"/>
-    </linearGradient>
-    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#60a5fa"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-    </filter>
-  </defs>
-
-  <!-- Background -->
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-
-  <!-- Dumbbell — centrato verticalmente a y=256 -->
-
-  <!-- Left plate -->
-  <rect x="82" y="180" width="88" height="152" rx="18" fill="url(#plate)"/>
-  <!-- Left plate highlight -->
-  <rect x="88" y="186" width="76" height="60" rx="12" fill="#3b82f6" opacity="0.35"/>
-
-  <!-- Left collar -->
-  <rect x="158" y="216" width="32" height="80" rx="8" fill="url(#bar)"/>
-
-  <!-- Bar -->
-  <rect x="190" y="242" width="132" height="28" rx="10" fill="url(#bar)"/>
-
-  <!-- Right collar -->
-  <rect x="322" y="216" width="32" height="80" rx="8" fill="url(#bar)"/>
-
-  <!-- Right plate -->
-  <rect x="342" y="180" width="88" height="152" rx="18" fill="url(#plate)"/>
-  <!-- Right plate highlight -->
-  <rect x="348" y="186" width="76" height="60" rx="12" fill="#3b82f6" opacity="0.35"/>
+  <rect width="512" height="512" rx="115" fill="#030712"/>
+  <text x="256" y="345"
+    font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif"
+    font-size="310" text-anchor="middle" fill="#f59e0b">💪</text>
 </svg>

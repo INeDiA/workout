@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icon.svg', 'favicon.png'],
       manifest: {
-        name: 'Scheda Allenamento',
-        short_name: 'Scheda',
-        description: 'Tracker allenamento — registra serie, pesi e progressione',
+        name: 'Workout',
+        short_name: 'Workout',
+        description: 'Tracker allenamento personale — serie, pesi, progressione',
         theme_color: '#030712',
         background_color: '#030712',
         display: 'standalone',
