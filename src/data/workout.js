@@ -126,7 +126,7 @@ export const GIORNI_DEFAULT = {
     nome: 'Pull',
     focus: 'Dorsali · Bicipiti',
     emoji: '💪',
-    colore: 'orange',
+    colore: 'rose',
     esercizi: [
       {
         id: 'lat_machine',
@@ -204,7 +204,7 @@ export const GIORNI_DEFAULT = {
     nome: 'Legs',
     focus: 'Gambe · Spalle',
     emoji: '🦵',
-    colore: 'green',
+    colore: 'cyan',
     esercizi: [
       {
         id: 'squat_smith',
