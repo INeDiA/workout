@@ -9,6 +9,7 @@ import ExercisePicker from '../components/ExercisePicker'
 import SettingsSheet from '../components/SettingsSheet'
 import SchedeSheet from '../components/SchedeSheet'
 import SessionEditModal from '../components/SessionEditModal'
+import CompletionModal from '../components/CompletionModal'
 import { useWakeLock } from '../hooks/useWakeLock'
 import { useEserciziCustom } from '../components/ExercisePicker'
 import { COLORI_SESSIONE } from '../data/workout'
@@ -64,6 +65,7 @@ export default function Oggi() {
   const [dragTargetId, setDragTargetId] = useState(null)
   const dragStartY = useRef(0)
   const dragTargetIdRef = useRef(null)
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
 
   useEffect(() => {
     if (!dragId) return
@@ -179,8 +181,13 @@ export default function Oggi() {
       setConfermaIncompleto(true)
       return
     }
-    completaSessione()
     setConfermaIncompleto(false)
+    setShowCompletionModal(true)
+  }
+
+  function handleConfermaCompletamento() {
+    setShowCompletionModal(false)
+    completaSessione()
     setGiornoOverride(null)
   }
 
@@ -533,6 +540,7 @@ export default function Oggi() {
                       }
                     : undefined
                 }
+                onSaveMemo={(v) => modificaEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id, { memo: v })}
               />
             )
           }
@@ -653,6 +661,16 @@ export default function Oggi() {
       {/* Schede sheet */}
       {showSchedeSheet && (
         <SchedeSheet onClose={() => setShowSchedeSheet(false)} />
+      )}
+
+      {/* Schermata completamento */}
+      {showCompletionModal && activeSession && (
+        <CompletionModal
+          sessione={activeSession}
+          workoutData={workoutData}
+          sessioniCompletate={sessioniCompletate}
+          onConferma={handleConfermaCompletamento}
+        />
       )}
     </div>
   )

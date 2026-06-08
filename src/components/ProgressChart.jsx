@@ -8,8 +8,10 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-export default function ProgressChart({ esercizioId, nomeEsercizio, sessions }) {
-  // Estrai il peso massimo usato per ogni sessione (ultimi 8 allenamenti con dati)
+export default function ProgressChart({ esercizioId, nomeEsercizio, sessions, isInverted = false }) {
+  // Estrai il peso rappresentativo per ogni sessione (ultimi 8 allenamenti con dati)
+  // Per esercizi normali: massimo. Per esercizi ad assistenza (isInverted): minimo.
+  const agg = isInverted ? Math.min : Math.max
   const data = sessions
     .filter((s) => s.completed && s.exercises?.[esercizioId]?.sets?.length > 0)
     .slice(-8)
@@ -19,13 +21,13 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions }) 
         .filter((p) => !isNaN(p) && p > 0)
       return {
         data: s.date.slice(5).replace('-', '/'), // MM/GG
-        peso: pesi.length > 0 ? Math.max(...pesi) : null,
+        peso: pesi.length > 0 ? agg(...pesi) : null,
       }
     })
     .filter((d) => d.peso !== null)
 
-  // PR = massimo storico assoluto tra tutti i punti visualizzati
-  const pr = data.length > 0 ? Math.max(...data.map((d) => d.peso)) : null
+  // PR = miglior risultato assoluto (min se isInverted, max altrimenti)
+  const pr = data.length > 0 ? agg(...data.map((d) => d.peso)) : null
 
   if (data.length < 2) {
     return (

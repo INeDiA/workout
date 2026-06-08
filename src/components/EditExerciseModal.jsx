@@ -24,6 +24,7 @@ const FORM_VUOTO = {
   isBodyweight: false,
   isTime: false,
   isShared: false,
+  isInverted: false,
 }
 
 export default function EditExerciseModal({ esercizio, onSave, onClose }) {
@@ -41,6 +42,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
         isBodyweight: esercizio.isBodyweight || false,
         isTime: esercizio.isTime || false,
         isShared: esercizio.isShared || false,
+        isInverted: esercizio.isInverted || false,
       })
     } else {
       setForm(FORM_VUOTO)
@@ -162,6 +164,17 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
               }`}
             >
               A tempo
+            </button>
+            <button
+              type="button"
+              onClick={() => set('isInverted', !form.isInverted)}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${
+                form.isInverted
+                  ? 'bg-blue-950 border-blue-700 text-blue-300'
+                  : 'bg-gray-800 border-gray-700 text-gray-400'
+              }`}
+            >
+              Assistenza
             </button>
           </div>
 

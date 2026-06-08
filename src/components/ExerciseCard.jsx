@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Info } from 'lucide-react'
 
-export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false, rightSlot, onCardClick }) {
+export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false, rightSlot, onCardClick, onSaveMemo }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
+  const [memoValue, setMemoValue] = useState(esercizio.memo || '')
   const { nome, serie, reps, note, gruppo, isBodyweight, isTime } = esercizio
 
   // Normalizza le serie con i dati salvati
@@ -99,6 +100,19 @@ export default function ExerciseCard({ esercizio, datiSerie = [], onAggiornaSeri
               <Info size={13} className="text-blue-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-gray-300 leading-relaxed">{note}</p>
             </div>
+          )}
+
+          {/* Memo personale — inline edit, auto-save on blur */}
+          {onSaveMemo && (
+            <textarea
+              value={memoValue}
+              onChange={(e) => setMemoValue(e.target.value)}
+              onBlur={() => onSaveMemo(memoValue.trim())}
+              placeholder="Appunti…"
+              rows={2}
+              maxLength={200}
+              className="w-full bg-gray-800/50 border border-gray-700/50 rounded-xl px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-gray-600 resize-none"
+            />
           )}
 
           {/* Riga per ogni serie */}

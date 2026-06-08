@@ -109,6 +109,7 @@ export function AppProvider({ children }) {
       date: oggi,
       dayId,
       completed: false,
+      startedAt: Date.now(),
       exercises,
       nutrition: { pre: false, integratori: false, post: false, note: '' },
     }

@@ -260,6 +260,7 @@ export default function Storico() {
                     esercizioId={e.id}
                     nomeEsercizio={e.nome}
                     sessions={sessioniCompletate}
+                    isInverted={!!e.isInverted}
                   />
                 ))}
             </div>
