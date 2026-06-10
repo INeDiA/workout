@@ -36,6 +36,7 @@ export default function Oggi() {
     eliminaSessione,
     abbandonaSessione,
     riordinaSessioni,
+    sessioniCompletate,
     timer,
   } = useApp()
 
