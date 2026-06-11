@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Trophy, Clock, BarChart2, Zap } from 'lucide-react'
+import { Trophy, Clock, BarChart2 } from 'lucide-react'
 
 function formatDurata(ms) {
   const min = Math.round(ms / 60000)
@@ -65,7 +65,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
 
     const completamento = serieTotali > 0 ? Math.round((serieCompletate / serieTotali) * 100) : 0
 
-    return { durata, serieCompletate, serieTotali, completamento, volume: Math.round(volume), pr }
+    return { durata, serieCompletate, serieTotali, completamento, pr }
   }, [sessione, esercizi, sessioniCompletate])
 
   return (
@@ -84,7 +84,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
         </div>
 
         {/* Statistiche */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className={`grid gap-3 mb-4 ${stats.durata ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {stats.durata && (
             <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center">
               <Clock size={16} className="text-blue-400 mx-auto mb-1" />
@@ -97,13 +97,6 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
             <p className="text-lg font-bold text-white">{stats.serieCompletate}/{stats.serieTotali}</p>
             <p className="text-xs text-gray-500">Serie</p>
           </div>
-          {stats.volume > 0 && (
-            <div className={`bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center ${!stats.durata ? 'col-span-2' : ''}`}>
-              <Zap size={16} className="text-yellow-400 mx-auto mb-1" />
-              <p className="text-lg font-bold text-white">{stats.volume.toLocaleString('it-IT')} kg</p>
-              <p className="text-xs text-gray-500">Volume totale</p>
-            </div>
-          )}
         </div>
 
         {/* Barra completamento */}
