@@ -37,6 +37,7 @@ export default function Oggi() {
     abbandonaSessione,
     riordinaSessioni,
     sessioniCompletate,
+    streak,
     timer,
   } = useApp()
 
@@ -670,6 +671,7 @@ export default function Oggi() {
           sessione={activeSession}
           workoutData={workoutData}
           sessioniCompletate={sessioniCompletate}
+          streak={streak}
           onConferma={handleConfermaCompletamento}
         />
       )}

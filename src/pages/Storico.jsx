@@ -27,27 +27,6 @@ function getCelleDelMese(anno, mese) {
   return celle
 }
 
-// Calcola i mesi da mostrare: dalla sessione più vecchia (o 3 mesi fa) a oggi
-function getMesiDaMostrare(sessioniCompletate) {
-  const oggi = new Date()
-  const meseOggi = new Date(oggi.getFullYear(), oggi.getMonth(), 1)
-
-  let inizio
-  if (sessioniCompletate.length > 0) {
-    const primaData = new Date(sessioniCompletate[0].date)
-    inizio = new Date(primaData.getFullYear(), primaData.getMonth(), 1)
-  } else {
-    inizio = new Date(oggi.getFullYear(), oggi.getMonth() - 2, 1) // almeno 3 mesi
-  }
-
-  const mesi = []
-  let cur = new Date(inizio)
-  while (cur <= meseOggi) {
-    mesi.push({ anno: cur.getFullYear(), mese: cur.getMonth() })
-    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1)
-  }
-  return mesi
-}
 
 const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
@@ -62,10 +41,23 @@ export default function Storico() {
   const [giornoGrafico, setGiornoGrafico] = useState(primaSessioneId)
   const [sessioneSelezionata, setSessioneSelezionata] = useState(null)
   const [giornoAggiunta, setGiornoAggiunta] = useState(null) // { giorno, data } per selettore sessione
+  const [activeTab, setActiveTab] = useState('calendario')
+  const [annoFiltro, setAnnoFiltro] = useState(new Date().getFullYear())
 
   const oggiStr = toLocalDateStr(new Date())
   const dateCompletate = new Map(sessioniCompletate.map((s) => [s.date, s]))
-  const mesiDaMostrare = getMesiDaMostrare(sessioniCompletate)
+
+  const anniDisponibili = useMemo(() => {
+    const anni = new Set(sessioniCompletate.map((s) => parseInt(s.date.slice(0, 4))))
+    anni.add(new Date().getFullYear())
+    return [...anni].sort()
+  }, [sessioniCompletate])
+
+  const mesiDaMostrare = useMemo(() => {
+    const annoCorrente = new Date().getFullYear()
+    const meseMax = annoFiltro === annoCorrente ? new Date().getMonth() : 11
+    return Array.from({ length: meseMax + 1 }, (_, i) => ({ anno: annoFiltro, mese: i })).reverse()
+  }, [annoFiltro])
 
   // Mappa colore sessione: { [sessionId]: dotColorClass }
   // Costruita da TUTTE le sessioni di TUTTE le schede
@@ -133,8 +125,37 @@ export default function Storico() {
           </div>
         </div>
 
+        {/* Tab switcher */}
+        <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
+          {[['calendario', 'Calendario'], ['progressione', 'Progressione']].map(([key, label]) => (
+            <button key={key} onClick={() => setActiveTab(key)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === key ? 'bg-gray-700 text-white' : 'text-gray-400'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         {/* Calendario mensile */}
+        {activeTab === 'calendario' && (
         <div>
+          {/* Selettore anno */}
+          {anniDisponibili.length > 1 && (
+            <div className="flex gap-2 mb-3 overflow-x-auto no-scrollbar">
+              {anniDisponibili.map((anno) => (
+                <button key={anno} onClick={() => setAnnoFiltro(anno)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    annoFiltro === anno ? 'bg-gray-700 text-white' : 'bg-gray-900 border border-gray-800 text-gray-400'
+                  }`}
+                >
+                  {anno}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Legenda — dinamica in base alla scheda attiva */}
           {sessioniLeggenda.length > 0 && (
             <div className="flex justify-end gap-3 mb-3 flex-wrap">
@@ -152,7 +173,7 @@ export default function Storico() {
 
           {/* Un blocco per ogni mese, dal più recente al più vecchio */}
           <div className="space-y-6">
-            {[...mesiDaMostrare].reverse().map(({ anno, mese }) => {
+            {mesiDaMostrare.map(({ anno, mese }) => {
               const nomeMese = new Date(anno, mese, 1)
                 .toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
               const celle = getCelleDelMese(anno, mese)
@@ -232,9 +253,10 @@ export default function Storico() {
             })}
           </div>
         </div>
+        )}
 
         {/* Grafici progressione pesi */}
-        {schedaAttiva?.sessioni?.length > 0 && (
+        {activeTab === 'progressione' && schedaAttiva?.sessioni?.length > 0 && (
           <div>
             <h2 className="text-sm font-semibold text-white mb-2">Progressione pesi</h2>
             <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1 overflow-x-auto no-scrollbar mb-3">

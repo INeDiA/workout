@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Trophy, Clock, BarChart2 } from 'lucide-react'
+import { Trophy, Clock, BarChart2, Flame } from 'lucide-react'
 
 function formatDurata(ms) {
   const min = Math.round(ms / 60000)
@@ -9,7 +9,7 @@ function formatDurata(ms) {
   return m > 0 ? `${h}h ${m}min` : `${h}h`
 }
 
-export default function CompletionModal({ sessione, workoutData, sessioniCompletate, onConferma }) {
+export default function CompletionModal({ sessione, workoutData, sessioniCompletate, streak, onConferma }) {
   const giorno = workoutData[sessione.dayId]
   const esercizi = giorno?.esercizi || []
 
@@ -97,6 +97,15 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
             <p className="text-lg font-bold text-white">{stats.serieCompletate}/{stats.serieTotali}</p>
             <p className="text-xs text-gray-500">Serie</p>
           </div>
+          {streak > 0 && (
+            <div className="col-span-2 bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center">
+              <Flame size={16} className="text-orange-400 mx-auto mb-1" />
+              <p className="text-lg font-bold text-white">
+                {streak} {streak === 1 ? 'settimana' : 'settimane'} di fila
+              </p>
+              <p className="text-xs text-gray-500">Streak</p>
+            </div>
+          )}
         </div>
 
         {/* Barra completamento */}

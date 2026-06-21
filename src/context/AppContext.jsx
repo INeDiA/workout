@@ -6,6 +6,18 @@ import { autoBackup } from '../utils/googleDrive'
 
 const AppContext = createContext(null)
 
+function lunediDellaSettimana(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const day = date.getDay() || 7
+  date.setDate(date.getDate() - (day - 1))
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
 // Usa ora locale invece di UTC per evitare che a mezzanotte dia "ieri"
 function dataOggi() {
   const d = new Date()
@@ -69,21 +81,36 @@ export function AppProvider({ children }) {
   }, [activeSession, oggi, sessioniCompletate, ordineSessioni])
 
   const streak = useMemo(() => {
-    const dateSet = new Set(sessioniCompletate.map((s) => s.date))
-    let count = 0
+    const conteggioPerSettimana = {}
+    for (const s of sessioniCompletate) {
+      const key = lunediDellaSettimana(s.date)
+      conteggioPerSettimana[key] = (conteggioPerSettimana[key] || 0) + 1
+    }
+    const target = settings.giorniSettimana ?? 3
     const now = new Date()
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
-      if (dateSet.has(dateStr)) {
+    const dayNow = now.getDay() || 7
+    const lunediOggi = new Date(now)
+    lunediOggi.setDate(now.getDate() - (dayNow - 1))
+    let count = 0
+    for (let i = 0; i < 52; i++) {
+      const d = new Date(lunediOggi)
+      d.setDate(lunediOggi.getDate() - i * 7)
+      const key = [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0'),
+      ].join('-')
+      const sessioni = conteggioPerSettimana[key] || 0
+      if (sessioni >= target) {
         count++
-      } else if (i > 0) {
+      } else if (i === 0) {
+        continue
+      } else {
         break
       }
     }
     return count
-  }, [sessioniCompletate])
+  }, [sessioniCompletate, settings.giorniSettimana])
 
   function iniziaSessione(dayId) {
     // Pre-popola i pesi con l'ultimo valore registrato per ogni esercizio
