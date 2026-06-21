@@ -9,7 +9,10 @@ async function findFile(token) {
   const res = await fetch(`${DRIVE_FILES}?q=${q}&fields=files(id,name,modifiedTime)`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error('Drive list failed')
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+    throw new Error(`Errore Google Drive (${res.status})`)
+  }
   const data = await res.json()
   return data.files?.[0] ?? null
 }
@@ -19,8 +22,8 @@ export async function uploadBackup(token) {
   const json = serializeBackup()
   const existing = await findFile(token)
   const url = existing
-    ? `${DRIVE_UPLOAD}/files/${existing.id}?uploadType=multipart`
-    : `${DRIVE_UPLOAD}/files?uploadType=multipart`
+    ? `${DRIVE_UPLOAD}/${existing.id}?uploadType=multipart`
+    : `${DRIVE_UPLOAD}?uploadType=multipart`
 
   const form = new FormData()
   form.append(
@@ -36,7 +39,10 @@ export async function uploadBackup(token) {
     headers: { Authorization: `Bearer ${token}` },
     body: form,
   })
-  if (!res.ok) throw new Error('Drive upload failed')
+  if (!res.ok) {
+    if (res.status === 401) throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+    throw new Error(`Upload fallito (${res.status})`)
+  }
   localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
 }
 

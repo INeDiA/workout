@@ -106,6 +106,12 @@ export function useBackupProvider() {
   // ── Upload backup (delega al provider attivo) ───────────────────────────
   async function uploadBackup() {
     if (!providerConfig) throw new Error('Nessun provider configurato')
+    if (
+      providerConfig.type === 'gdrive' &&
+      Date.now() >= (providerConfig.expires_at ?? 0) - 30_000
+    ) {
+      throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+    }
     const json = serializeBackup()
     if (providerConfig.type === 'gdrive') {
       const { uploadBackup: driveUpload } = await import('../utils/googleDrive')
