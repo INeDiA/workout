@@ -1,35 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, Download } from 'lucide-react'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
-// Banner "Aggiungi alla Home Screen" — visibile solo la prima volta
 export default function InstallBanner() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null)
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    // Già ignorato in precedenza
-    if (localStorage.getItem('sm_install_dismissed') === 'true') return
-
-    const handler = (e) => {
-      e.preventDefault()
-      setDeferredPrompt(e)
-      setVisible(true)
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
-  function installa() {
-    deferredPrompt?.prompt()
-    deferredPrompt?.userChoice.then(() => setVisible(false))
-  }
+  const { isInstallable, isInstalled, triggerInstall } = useInstallPrompt()
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem('sm_install_dismissed') === 'true'
+  )
 
   function nascondi() {
-    setVisible(false)
+    setDismissed(true)
     localStorage.setItem('sm_install_dismissed', 'true')
   }
 
-  if (!visible) return null
+  if (isInstalled || dismissed || !isInstallable) return null
 
   return (
     <div className="fixed top-4 left-4 right-4 z-50 bg-blue-950 border border-blue-700 rounded-2xl p-4 flex items-center gap-3 shadow-2xl animate-slide-down">
@@ -41,7 +25,7 @@ export default function InstallBanner() {
         <p className="text-xs text-blue-300 mt-0.5">Usa l'app offline, sempre con te</p>
       </div>
       <button
-        onClick={installa}
+        onClick={triggerInstall}
         className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all flex-shrink-0"
       >
         Installa

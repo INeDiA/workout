@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
-import { X, ChevronRight, AlertTriangle, Upload, Share2, CloudUpload, CloudDownload, Unlink, Globe } from 'lucide-react'
+import { X, ChevronRight, AlertTriangle, Upload, Share2, CloudUpload, CloudDownload, Unlink, Globe, Download } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { backupNecessario } from '../utils/backup'
 import { useBackupProvider } from '../hooks/useBackupProvider'
 import { deserializeBackup } from '../utils/backupData'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
 
 const DURATE_TIMER = [60, 90, 120, 150, 180]
 
@@ -12,6 +13,8 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
   const [passoReset, setPassoReset] = useState(0)
   const [erroreImport, setErroreImport] = useState(null)
   const inputFileRef = useRef(null)
+
+  const { isInstalled, isInstallable, isIOS, triggerInstall } = useInstallPrompt()
 
   const {
     providerConfig, providerValido,
@@ -221,6 +224,46 @@ export default function SettingsSheet({ settings, onUpdateSettings, onClose, onG
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* ── App ──────────────────────────────────────────────── */}
+            <div className="border-t border-gray-800 pt-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">App</p>
+              {isInstalled ? (
+                <div className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
+                  <Download size={15} className="text-green-400 flex-shrink-0" />
+                  <p className="text-sm text-gray-300">App installata</p>
+                </div>
+              ) : isInstallable ? (
+                <button
+                  onClick={triggerInstall}
+                  className="w-full flex items-center gap-3 bg-blue-950 hover:bg-blue-900 border border-blue-700 rounded-2xl px-4 py-3 transition-colors active:scale-98"
+                >
+                  <Download size={15} className="text-blue-400 flex-shrink-0" />
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-white">Installa app</p>
+                    <p className="text-xs text-blue-300 mt-0.5">Aggiungi alla schermata Home per usarla offline</p>
+                  </div>
+                </button>
+              ) : isIOS ? (
+                <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
+                  <p className="text-sm font-semibold text-white mb-2">Installa su iPhone / iPad</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    1. Tocca il tasto <span className="text-white">Condividi</span> ⎙ nella barra di Safari<br />
+                    2. Scorri e scegli <span className="text-white">Aggiungi a schermata Home</span><br />
+                    3. Tocca <span className="text-white">Aggiungi</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
+                  <p className="text-sm font-semibold text-white mb-2">Installa l'app</p>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    1. Tocca il menu <span className="text-white">⋮</span> in alto a destra nel browser<br />
+                    2. Scegli <span className="text-white">Aggiungi a schermata Home</span> (o "Installa app")<br />
+                    3. Conferma
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* ── Backup ───────────────────────────────────────────── */}
