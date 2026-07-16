@@ -8,6 +8,7 @@ export default function SchedeSheet({ onClose }) {
     schedaAttiva,
     setSchedaAttiva,
     creaScheda,
+    creaSchedaStandard,
     rinominaScheda,
     eliminaScheda,
     duplicaScheda,
@@ -41,6 +42,11 @@ export default function SchedeSheet({ onClose }) {
   function handleCrea() {
     const n = (schede?.length || 0) + 1
     const nuova = creaScheda(`Nuova scheda ${n}`)
+    setSchedaAttiva(nuova.id)
+  }
+
+  function handleCreaStandard() {
+    const nuova = creaSchedaStandard()
     setSchedaAttiva(nuova.id)
   }
 
@@ -167,13 +173,20 @@ export default function SchedeSheet({ onClose }) {
         </div>
 
         {/* Nuova scheda */}
-        <div className="pt-4 flex-shrink-0">
+        <div className="pt-4 flex-shrink-0 grid grid-cols-2 gap-2">
           <button
             onClick={handleCrea}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={16} />
             Nuova scheda
+          </button>
+          <button
+            onClick={handleCreaStandard}
+            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
+          >
+            <Plus size={16} />
+            Scheda standard
           </button>
         </div>
       </div>

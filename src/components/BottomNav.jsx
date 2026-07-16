@@ -1,9 +1,9 @@
-import { Dumbbell, BarChart2, Heart } from 'lucide-react'
+import { Dumbbell, BarChart2, Settings } from 'lucide-react'
 
 const TABS = [
   { id: 'oggi', label: 'Scheda', Icon: Dumbbell },
   { id: 'storico', label: 'Storico', Icon: BarChart2 },
-  { id: 'nutrizione', label: 'Corpo', Icon: Heart },
+  { id: 'impostazioni', label: 'Impostazioni', Icon: Settings },
 ]
 
 export default function BottomNav({ tab, onChange }) {

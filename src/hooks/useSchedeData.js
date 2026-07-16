@@ -72,15 +72,19 @@ export function useSchedeData() {
     if (schedaMigrata) {
       schedeEffettive = [schedaMigrata]
       idAttivo = schedaMigrata.id
+      try {
+        localStorage.setItem('sm_schede', JSON.stringify(schedeEffettive))
+        localStorage.setItem('sm_scheda_attiva_id', JSON.stringify(idAttivo))
+      } catch {}
     } else {
-      schedeEffettive = [SCHEDA_DEFAULT]
-      idAttivo = SCHEDA_DEFAULT.id
+      // Primo avvio senza dati legacy: nessuna scheda creata in automatico,
+      // l'utente sceglie tramite la schermata di onboarding (vedi necessitaOnboarding).
+      schedeEffettive = []
+      idAttivo = null
     }
-    try {
-      localStorage.setItem('sm_schede', JSON.stringify(schedeEffettive))
-      localStorage.setItem('sm_scheda_attiva_id', JSON.stringify(idAttivo))
-    } catch {}
   }
+
+  const necessitaOnboarding = schedeEffettive.length === 0
 
   const schedaAttiva =
     schedeEffettive.find((s) => s.id === idAttivo) || schedeEffettive[0]
@@ -101,6 +105,16 @@ export function useSchedeData() {
       id: generaId(),
       nome: nome || 'Nuova scheda',
       sessioni: [],
+    }
+    setSchede((prev) => [...(prev || schedeEffettive), nuova])
+    return nuova
+  }
+
+  function creaSchedaStandard(nome) {
+    const nuova = {
+      id: generaId(),
+      nome: nome || 'La mia scheda',
+      sessioni: [GIORNI_DEFAULT.A, GIORNI_DEFAULT.B, GIORNI_DEFAULT.C],
     }
     setSchede((prev) => [...(prev || schedeEffettive), nuova])
     return nuova
@@ -343,8 +357,10 @@ export function useSchedeData() {
     schede: schede || schedeEffettive,
     schedaAttiva,
     workoutData,
+    necessitaOnboarding,
     setSchedaAttiva,
     creaScheda,
+    creaSchedaStandard,
     rinominaScheda,
     eliminaScheda,
     duplicaScheda,

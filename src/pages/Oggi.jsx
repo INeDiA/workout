@@ -1,13 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Pencil, Trash2, Plus, RotateCcw, Settings, X, Layers2, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
-import { backupNecessario } from '../utils/backup'
+import { Play, CheckCircle, Award, AlertTriangle, Plus, Layers2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
 import Timer from '../components/Timer'
 import EditExerciseModal from '../components/EditExerciseModal'
 import ExercisePicker from '../components/ExercisePicker'
-import SettingsSheet from '../components/SettingsSheet'
-import SchedeSheet from '../components/SchedeSheet'
 import SessionEditModal from '../components/SessionEditModal'
 import CompletionModal from '../components/CompletionModal'
 import { useWakeLock } from '../hooks/useWakeLock'
@@ -23,40 +20,29 @@ export default function Oggi() {
     iniziaSessione,
     aggiornaEsercizio,
     completaSessione,
-    settings,
-    setSettings,
     schedaAttiva,
     aggiungiEsercizio,
     modificaEsercizio,
     rimuoviEsercizio,
     riordinaEsercizi,
-    resetSchedaDefault,
     aggiungiSessione,
-    rinominaSessione,
-    eliminaSessione,
     abbandonaSessione,
-    riordinaSessioni,
     sessioniCompletate,
     streak,
     timer,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
-  const [editMode, setEditMode] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
-  const [showSchedeSheet, setShowSchedeSheet] = useState(false)
+  const [swipedId, setSwipedId] = useState(null)
   const [confermaIncompleto, setConfermaIncompleto] = useState(false)
   const [confermaAnnulla, setConfermaAnnulla] = useState(false)
-  const [confermaReset, setConfermaReset] = useState(false)
-  const [confermaEliminaSessione, setConfermaEliminaSessione] = useState(null)
 
   // Esercizio modal
   const [modalEsercizio, setModalEsercizio] = useState(null) // null=chiuso, undefined=nuovo, obj=modifica
   const [showPicker, setShowPicker] = useState(false)
 
-  // Sessione modal
+  // Sessione modal (solo per il primo inserimento su scheda vuota)
   const [showSessionModal, setShowSessionModal] = useState(false)
-  const [sessioneModaleTarget, setSessioneModaleTarget] = useState(null) // null=nuova, obj=modifica
 
   // Esercizi custom
   const [, setEserciziCustom] = useEserciziCustom()
@@ -129,6 +115,11 @@ export default function Oggi() {
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
 
+  // Se la sessione puntata da giornoOverride è stata eliminata, torna alla rotazione automatica
+  useEffect(() => {
+    if (giornoOverride && !workoutData[giornoOverride]) setGiornoOverride(null)
+  }, [giornoOverride, workoutData])
+
   // Giorno effettivo
   const giornoEffettivo = giornoOverride ?? giornoOggi ?? ordineSessioni[0]
   const giorno = workoutData[giornoEffettivo]
@@ -141,10 +132,7 @@ export default function Oggi() {
         <div className="text-center">
           <p className="text-gray-400 mb-4">Nessuna sessione nella scheda attiva.</p>
           <button
-            onClick={() => {
-              setSessioneModaleTarget(null)
-              setShowSessionModal(true)
-            }}
+            onClick={() => setShowSessionModal(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold"
           >
             Aggiungi sessione
@@ -224,46 +212,8 @@ export default function Oggi() {
     setShowPicker(false)
   }
 
-  function handleReset() {
-    if (!confermaReset) { setConfermaReset(true); return }
-    resetSchedaDefault()
-    setConfermaReset(false)
-    setEditMode(false)
-  }
-
   function togglePill(id) {
     setGiornoOverride(giornoOverride === id ? null : id)
-  }
-
-  function handleSalvaSessione(dati) {
-    if (sessioneModaleTarget) {
-      rinominaSessione(schedaAttiva.id, sessioneModaleTarget.id, dati)
-    } else {
-      aggiungiSessione(schedaAttiva.id, dati)
-    }
-    setShowSessionModal(false)
-    setSessioneModaleTarget(null)
-  }
-
-  function spostaSessione(idx, direction) {
-    const sessioni = [...(schedaAttiva?.sessioni || [])]
-    const targetIdx = idx + direction
-    if (targetIdx < 0 || targetIdx >= sessioni.length) return
-    ;[sessioni[idx], sessioni[targetIdx]] = [sessioni[targetIdx], sessioni[idx]]
-    riordinaSessioni(schedaAttiva.id, sessioni)
-  }
-
-  function handleEliminaSessione(sessioneId) {
-    if (confermaEliminaSessione === sessioneId) {
-      eliminaSessione(schedaAttiva.id, sessioneId)
-      setConfermaEliminaSessione(null)
-      // Se eliminata quella attiva, torna alla prima
-      if (giornoEffettivo === sessioneId) {
-        setGiornoOverride(null)
-      }
-    } else {
-      setConfermaEliminaSessione(sessioneId)
-    }
   }
 
   return (
@@ -279,30 +229,6 @@ export default function Oggi() {
             {activeSession && (
               <span className="text-xs text-gray-400 font-medium">{percentuale}%</span>
             )}
-            {!activeSession && (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="relative p-2 bg-gray-800 text-gray-400 hover:bg-gray-700 rounded-xl transition-colors"
-                title="Impostazioni"
-              >
-                <Settings size={15} />
-                {backupNecessario() && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                )}
-              </button>
-            )}
-            <button
-              onClick={() => { setEditMode(!editMode); setConfermaReset(false); setConfermaEliminaSessione(null) }}
-              disabled={!!activeSession}
-              className={`p-2 rounded-xl transition-colors ${
-                editMode
-                  ? 'bg-blue-800 text-blue-200'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              } disabled:opacity-30 disabled:cursor-not-allowed`}
-              title={activeSession ? 'Termina la sessione per modificare' : 'Modifica scheda'}
-            >
-              <Pencil size={15} />
-            </button>
           </div>
         </div>
 
@@ -315,88 +241,49 @@ export default function Oggi() {
         {!activeSession && (
           <div className="mt-4">
             {(() => {
-              const n = ordineSessioni.length
-              const gridCols =
-                n === 1 ? 'grid-cols-1' :
-                n === 2 ? 'grid-cols-2' :
-                n === 3 ? 'grid-cols-3' :
-                n === 4 ? 'grid-cols-2' :
-                          'grid-cols-6'       // 5 giorni
+              const sessioni = schedaAttiva?.sessioni || []
+              const n = sessioni.length
+              if (n === 0) return null
 
+              const pill = (sess) => {
+                const sessColori = (sess.colore && COLORI_SESSIONE[sess.colore]) || COLORI_SESSIONE.blue
+                const attivo = sess.id === giornoEffettivo
+                return (
+                  <button
+                    key={sess.id}
+                    onClick={() => togglePill(sess.id)}
+                    className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
+                      attivo
+                        ? sessColori.pill + ' border-transparent shadow-md'
+                        : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                    }`}
+                  >
+                    {sess.emoji && <span>{sess.emoji}</span>}
+                    <span>{sess.nome}</span>
+                  </button>
+                )
+              }
+
+              // Fino a 3 sessioni: colonne piene equidistribuite
+              if (n <= 3) {
+                const gridCols = n === 1 ? 'grid-cols-1' : n === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                return <div className={`grid gap-2 ${gridCols}`}>{sessioni.map(pill)}</div>
+              }
+
+              // Oltre 3: righe da max 3 colonne, sempre centrate (anche l'ultima riga incompleta)
               return (
-                <div className={`grid gap-2 ${gridCols}`}>
-                  {ordineSessioni.map((id, idx) => {
-                    const sess = workoutData[id]
-                    if (!sess) return null
-                    const sessColori = (sess.colore && COLORI_SESSIONE[sess.colore]) || COLORI_SESSIONE.blue
-                    const attivo = id === giornoEffettivo
-
-                    // Per 5 giorni: tutti col-span-2; il 4° parte dalla colonna 2 per centrare
-                    const spanClass = n === 5
-                      ? idx === 3 ? 'col-span-2 col-start-2' : 'col-span-2'
-                      : ''
-
-                    return (
-                      <div key={id} className={`flex flex-col gap-1 ${spanClass}`}>
-                        <button
-                          onClick={() => { togglePill(id); if (editMode) { setSessioneModaleTarget(sess); setShowSessionModal(true) } }}
-                          className={`w-full flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 ${
-                            attivo
-                              ? sessColori.pill + ' border-transparent shadow-md'
-                              : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
-                          }`}
-                        >
-                          {sess.emoji && <span>{sess.emoji}</span>}
-                          <span>{sess.nome}</span>
-                          {editMode && (schedaAttiva?.sessioni?.length || 0) > 1 && (
-                            <span
-                              onClick={(e) => { e.stopPropagation(); handleEliminaSessione(id) }}
-                              className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
-                                confermaEliminaSessione === id
-                                  ? 'bg-red-600 text-white'
-                                  : 'bg-black/30 text-white/70 hover:bg-red-600'
-                              }`}
-                            >×</span>
-                          )}
-                        </button>
-                        {/* Frecce riordino sessioni in edit mode */}
-                        {editMode && (schedaAttiva?.sessioni?.length || 0) > 1 && (
-                          <div className="flex justify-between px-0.5">
-                            <button
-                              onClick={() => spostaSessione(idx, -1)}
-                              disabled={idx === 0}
-                              className="p-1 text-gray-500 hover:text-white disabled:opacity-0 transition-colors active:scale-90 rounded-lg"
-                            >
-                              <ChevronLeft size={14} />
-                            </button>
-                            <button
-                              onClick={() => spostaSessione(idx, 1)}
-                              disabled={idx === ordineSessioni.length - 1}
-                              className="p-1 text-gray-500 hover:text-white disabled:opacity-0 transition-colors active:scale-90 rounded-lg"
-                            >
-                              <ChevronRight size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {sessioni.map((sess) => (
+                    <div key={sess.id} style={{ flex: '0 0 calc((100% - 1rem) / 3)' }}>
+                      {pill(sess)}
+                    </div>
+                  ))}
                 </div>
               )
             })()}
 
-            {/* Pulsante aggiungi sessione in edit mode */}
-            {editMode && (
-              <button
-                onClick={() => { setSessioneModaleTarget(null); setShowSessionModal(true) }}
-                className="mt-2 flex items-center gap-1 px-3 py-2 rounded-xl text-sm border border-dashed border-gray-600 text-gray-500 hover:border-blue-500 hover:text-blue-400 transition-colors"
-              >
-                <Plus size={14} />
-              </button>
-            )}
-
             {/* Indica override */}
-            {!editMode && giornoOverride && giornoOverride !== giornoOggi && (
+            {giornoOverride && giornoOverride !== giornoOggi && (
               <p className="text-xs text-gray-500 mt-2">
                 Rotazione automatica:{' '}
                 <button
@@ -433,7 +320,7 @@ export default function Oggi() {
 
       <div className="px-4 mt-4 space-y-3">
         {/* Pulsante Inizia */}
-        {!activeSession && !editMode && (
+        {!activeSession && (
           <button
             onClick={handleIniziaSessione}
             className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-semibold rounded-2xl py-4 transition-all shadow-lg shadow-blue-950"
@@ -441,26 +328,6 @@ export default function Oggi() {
             <Play size={20} fill="white" />
             Inizia Allenamento
           </button>
-        )}
-
-        {/* Banner modalità modifica */}
-        {editMode && (
-          <div className="bg-blue-950 border border-blue-800 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-blue-300">
-              Tocca una sessione per rinominarla · ✏️ per modificare · 🗑 per rimuovere.
-            </p>
-            <button
-              onClick={handleReset}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl flex-shrink-0 transition-colors ${
-                confermaReset
-                  ? 'bg-red-800 text-red-200'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-              }`}
-            >
-              <RotateCcw size={12} />
-              {confermaReset ? 'Conferma reset' : 'Reset default'}
-            </button>
-          </div>
         )}
 
         {/* Lista esercizi */}
@@ -471,79 +338,50 @@ export default function Oggi() {
           function renderEsercizio(esercizio) {
             const isDragging = esercizio.id === dragId
             const isTarget = esercizio.id === dragTargetId && !isDragging
+            const puoGestire = !activeSession
 
-            if (editMode) {
-              // In edit mode: corpo card apre modale, niente accordion
-              const rightSlot = (
-                <div className="flex items-center pr-2 gap-0.5">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id)
-                    }}
-                    className="p-2 rounded-xl hover:bg-red-900 active:scale-90 transition-all"
-                  >
-                    <Trash2 size={13} className="text-red-400" />
-                  </button>
-                  <div
-                    className="p-2 touch-none select-none cursor-grab active:cursor-grabbing"
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                      dragStartY.current = e.clientY
-                      setDragId(esercizio.id)
-                    }}
-                    onTouchStart={(e) => {
-                      dragStartY.current = e.touches[0].clientY
-                      setDragId(esercizio.id)
-                    }}
-                  >
-                    <GripVertical size={16} className="text-gray-500" />
-                  </div>
-                </div>
-              )
-              return (
-                <div
-                  key={esercizio.id}
-                  data-drag-id={esercizio.id}
-                  className={`transition-shadow ${isTarget ? 'ring-2 ring-blue-500/50 rounded-2xl' : ''}`}
-                  style={isDragging ? {
-                    transform: `translateY(${dragOffset}px)`,
-                    zIndex: 30,
-                    opacity: 0.92,
-                    boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
-                    borderRadius: '16px',
-                    pointerEvents: 'none',
-                  } : {}}
-                >
-                  <ExerciseCard
-                    esercizio={esercizio}
-                    datiSerie={[]}
-                    onAggiornaSerie={undefined}
-                    onCardClick={() => setModalEsercizio(esercizio)}
-                    rightSlot={rightSlot}
-                  />
-                </div>
-              )
-            }
             return (
-              <ExerciseCard
+              <div
                 key={esercizio.id}
-                esercizio={esercizio}
-                datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
-                onAggiornaSerie={
-                  activeSession
-                    ? (sets) => {
-                        const prevSets = activeSession.exercises[esercizio.id]?.sets || []
-                        const nuovaSerieCompletata = sets.some(
-                          (s, i) => s.done && !(prevSets[i]?.done)
-                        )
-                        if (nuovaSerieCompletata) timer.start()
-                        aggiornaEsercizio(esercizio.id, { sets })
-                      }
-                    : undefined
-                }
-                onSaveMemo={(v) => modificaEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id, { memo: v })}
-              />
+                data-drag-id={esercizio.id}
+                className={`transition-shadow ${isTarget ? 'ring-2 ring-blue-500/50 rounded-2xl' : ''}`}
+                style={isDragging ? {
+                  transform: `translateY(${dragOffset}px)`,
+                  zIndex: 30,
+                  opacity: 0.92,
+                  boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                  borderRadius: '16px',
+                  pointerEvents: 'none',
+                } : {}}
+              >
+                <ExerciseCard
+                  esercizio={esercizio}
+                  datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
+                  onAggiornaSerie={
+                    activeSession
+                      ? (sets) => {
+                          const prevSets = activeSession.exercises[esercizio.id]?.sets || []
+                          const nuovaSerieCompletata = sets.some(
+                            (s, i) => s.done && !(prevSets[i]?.done)
+                          )
+                          if (nuovaSerieCompletata) timer.start()
+                          aggiornaEsercizio(esercizio.id, { sets })
+                        }
+                      : undefined
+                  }
+                  onSaveMemo={(v) => modificaEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id, { memo: v })}
+                  open={swipedId === esercizio.id}
+                  onOpenChange={(isOpen) => setSwipedId(isOpen ? esercizio.id : null)}
+                  onEdit={puoGestire ? () => setModalEsercizio(esercizio) : undefined}
+                  onDelete={puoGestire ? () => rimuoviEsercizio(schedaAttiva.id, giornoEffettivo, esercizio.id) : undefined}
+                  onDragHandleStart={puoGestire ? (e) => {
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+                    if (!e.touches) e.preventDefault()
+                    dragStartY.current = clientY
+                    setDragId(esercizio.id)
+                  } : undefined}
+                />
+              </div>
             )
           }
 
@@ -568,8 +406,8 @@ export default function Oggi() {
           )
         })()}
 
-        {/* Aggiungi esercizio in edit mode */}
-        {editMode && (
+        {/* Aggiungi esercizio */}
+        {!activeSession && (
           <button
             onClick={() => setShowPicker(true)}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-4 text-sm font-medium transition-colors active:scale-98"
@@ -639,30 +477,6 @@ export default function Oggi() {
           onSave={handleSalvaEsercizio}
           onClose={() => setModalEsercizio(null)}
         />
-      )}
-
-      {/* Modal sessione */}
-      {showSessionModal && (
-        <SessionEditModal
-          sessione={sessioneModaleTarget}
-          onSave={handleSalvaSessione}
-          onClose={() => { setShowSessionModal(false); setSessioneModaleTarget(null) }}
-        />
-      )}
-
-      {/* Pannello impostazioni */}
-      {showSettings && (
-        <SettingsSheet
-          settings={settings}
-          onUpdateSettings={setSettings}
-          onClose={() => setShowSettings(false)}
-          onGestisciSchede={() => setShowSchedeSheet(true)}
-        />
-      )}
-
-      {/* Schede sheet */}
-      {showSchedeSheet && (
-        <SchedeSheet onClose={() => setShowSchedeSheet(false)} />
       )}
 
       {/* Schermata completamento */}

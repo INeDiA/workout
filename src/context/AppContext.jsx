@@ -37,13 +37,21 @@ export function AppProvider({ children }) {
   const timer = useTimer(settings.timerDuration)
   useEffect(() => { timer.changeDuration(settings.timerDuration) }, [settings.timerDuration]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Rimuove i dati della vecchia sezione "Corpo" (peso/recovery), non più tracciati
+  useEffect(() => {
+    localStorage.removeItem('sm_peso_log')
+    localStorage.removeItem('sm_recovery_log')
+  }, [])
+
   const schedeData = useSchedeData()
   const {
     schede,
     schedaAttiva,
     workoutData,
+    necessitaOnboarding,
     setSchedaAttiva,
     creaScheda,
+    creaSchedaStandard,
     rinominaScheda,
     eliminaScheda,
     duplicaScheda,
@@ -220,8 +228,10 @@ export function AppProvider({ children }) {
         schede,
         schedaAttiva,
         workoutData,
+        necessitaOnboarding,
         setSchedaAttiva,
         creaScheda,
+        creaSchedaStandard,
         rinominaScheda,
         eliminaScheda,
         duplicaScheda,
