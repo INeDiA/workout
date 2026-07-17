@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { webdavProvider } from '../utils/webdav'
 import { serializeBackup, deserializeBackup } from '../utils/backupData'
+import { rinnovaESalvaTokenGdrive } from '../utils/googleAuth'
 
 const STORAGE_KEY = 'sm_backup_provider'
 const GDRIVE_REDIRECT_URI = () => window.location.origin + import.meta.env.BASE_URL
@@ -8,6 +9,9 @@ const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
 const GDRIVE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
   '218821816699-othhqj9dngod4imr2qkiichno2jfn1v1.apps.googleusercontent.com'
+
+// Soglia entro cui tentare il rinnovo proattivo del token (prima che scada davvero)
+const SOGLIA_RINNOVO_MS = 5 * 60 * 1000
 
 // ── Migrazione dal vecchio formato sm_gdrive_token ──────────────────────────
 function migrateOldToken() {
@@ -39,6 +43,8 @@ function saveConfig(config) {
 
 export function useBackupProvider() {
   const [providerConfig, setProviderConfig] = useState(readConfig)
+  const providerConfigRef = useRef(providerConfig)
+  providerConfigRef.current = providerConfig
 
   // Gestisce il ritorno dal redirect OAuth Google
   useEffect(() => {
@@ -67,6 +73,41 @@ export function useBackupProvider() {
         setProviderConfig(config)
       })
       .catch(() => {})
+  }, [])
+
+  // Prova il rinnovo silenzioso del token gdrive; aggiorna state+localStorage se riesce.
+  // Restituisce la config aggiornata (o quella corrente se non serve/non riesce rinnovare).
+  async function assicuraTokenValido() {
+    const config = providerConfigRef.current
+    if (!config || config.type !== 'gdrive') return config
+    if (Date.now() < (config.expires_at ?? 0) - 30_000) return config
+
+    const rinnovata = await rinnovaESalvaTokenGdrive()
+    if (rinnovata) {
+      setProviderConfig(rinnovata)
+      return rinnovata
+    }
+    return config
+  }
+
+  // Rinnovo proattivo in background: al mount e quando l'app torna in primo piano,
+  // se il token scade a breve prova a rinnovarlo senza attendere un'azione dell'utente.
+  useEffect(() => {
+    function controllaRinnovo() {
+      const config = providerConfigRef.current
+      if (!config || config.type !== 'gdrive') return
+      if (Date.now() < (config.expires_at ?? 0) - SOGLIA_RINNOVO_MS) return
+      rinnovaESalvaTokenGdrive().then((rinnovata) => {
+        if (rinnovata) setProviderConfig(rinnovata)
+      })
+    }
+
+    controllaRinnovo()
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') controllaRinnovo()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [])
 
   // true se il provider è configurato e il token (per gdrive) non è scaduto
@@ -106,18 +147,19 @@ export function useBackupProvider() {
   // ── Upload backup (delega al provider attivo) ───────────────────────────
   async function uploadBackup() {
     if (!providerConfig) throw new Error('Nessun provider configurato')
-    if (
-      providerConfig.type === 'gdrive' &&
-      Date.now() >= (providerConfig.expires_at ?? 0) - 30_000
-    ) {
-      throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+    let config = providerConfig
+    if (config.type === 'gdrive') {
+      config = await assicuraTokenValido()
+      if (Date.now() >= (config.expires_at ?? 0) - 30_000) {
+        throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+      }
     }
     const json = serializeBackup()
-    if (providerConfig.type === 'gdrive') {
+    if (config.type === 'gdrive') {
       const { uploadBackup: driveUpload } = await import('../utils/googleDrive')
-      await driveUpload(providerConfig.access_token)
-    } else if (providerConfig.type === 'webdav') {
-      await webdavProvider.upload(providerConfig, json)
+      await driveUpload(config.access_token)
+    } else if (config.type === 'webdav') {
+      await webdavProvider.upload(config, json)
       localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
     }
   }
@@ -125,11 +167,16 @@ export function useBackupProvider() {
   // ── Download backup (delega al provider attivo) ─────────────────────────
   async function downloadBackup() {
     if (!providerConfig) throw new Error('Nessun provider configurato')
-    if (providerConfig.type === 'gdrive') {
+    let config = providerConfig
+    if (config.type === 'gdrive') {
+      config = await assicuraTokenValido()
+      if (Date.now() >= (config.expires_at ?? 0) - 30_000) {
+        throw new Error('Token Google scaduto. Riconnetti il tuo account.')
+      }
       const { downloadBackup: driveDownload } = await import('../utils/googleDrive')
-      return driveDownload(providerConfig.access_token)
-    } else if (providerConfig.type === 'webdav') {
-      return webdavProvider.download(providerConfig)
+      return driveDownload(config.access_token)
+    } else if (config.type === 'webdav') {
+      return webdavProvider.download(config)
     }
   }
 
