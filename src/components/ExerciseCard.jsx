@@ -16,15 +16,20 @@ export default function ExerciseCard({
 
   const canManage = !!(onEdit || onDelete || onDragHandleStart)
 
-  // Reset della conferma quando la card si richiude (swipe indietro, o apertura di un'altra card)
-  useEffect(() => {
+  // Reset della conferma quando la card si richiude (swipe indietro, o apertura di un'altra
+  // card) — aggiustamento di stato durante il render, non in un effetto (evita un giro extra
+  // di commit/re-render), vedi https://react.dev/learn/you-might-not-need-an-effect
+  const [prevOpen, setPrevOpen] = useState(open)
+  if (open !== prevOpen) {
+    setPrevOpen(open)
     if (!open) setConfermaElimina(false)
-  }, [open])
+  }
 
   // ── Swipe-to-reveal (solo se canManage) ──────────────────────────────
   // offsetRef è la fonte di verità letta/scritta sincronamente dai gesture handler;
   // offset (state) esiste solo per innescare il re-render visivo del transform.
   const [offset, setOffset] = useState(0)
+  const [isGesturing, setIsGesturing] = useState(false)
   const offsetRef = useRef(0)
   const draggingRef = useRef(false)
   const startX = useRef(0)
@@ -39,11 +44,12 @@ export default function ExerciseCard({
 
   useEffect(() => {
     if (!draggingRef.current) updateOffset(open ? -REVEAL_WIDTH : 0)
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open])
 
   function gestureStart(x, y) {
     if (!canManage) return
     draggingRef.current = true
+    setIsGesturing(true)
     startX.current = x
     startY.current = y
     startOffset.current = offsetRef.current
@@ -57,7 +63,7 @@ export default function ExerciseCard({
     if (!axisLock.current) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
       axisLock.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-      if (axisLock.current === 'y') { draggingRef.current = false; return }
+      if (axisLock.current === 'y') { draggingRef.current = false; setIsGesturing(false); return }
     }
     const next = Math.min(0, Math.max(-REVEAL_WIDTH, startOffset.current + dx))
     updateOffset(next)
@@ -66,6 +72,7 @@ export default function ExerciseCard({
   function gestureEnd() {
     if (!draggingRef.current) return
     draggingRef.current = false
+    setIsGesturing(false)
     const shouldOpen = offsetRef.current < -REVEAL_WIDTH / 2
     updateOffset(shouldOpen ? -REVEAL_WIDTH : 0)
     if (shouldOpen !== open) onOpenChange?.(shouldOpen)
@@ -170,7 +177,7 @@ export default function ExerciseCard({
         }`}
         style={{
           transform: `translateX(${offset}px)`,
-          transition: draggingRef.current ? 'none' : 'transform 0.2s ease-out',
+          transition: isGesturing ? 'none' : 'transform 0.2s ease-out',
         }}
         onTouchStart={canManage ? (e) => gestureStart(e.touches[0].clientX, e.touches[0].clientY) : undefined}
         onTouchMove={canManage ? (e) => gestureMove(e.touches[0].clientX, e.touches[0].clientY) : undefined}

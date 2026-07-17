@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Trophy, Clock, BarChart2, Flame } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
@@ -15,25 +15,23 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
   const giorno = workoutData[sessione.dayId]
   const esercizi = giorno?.esercizi || []
 
+  // Catturato una sola volta all'apertura del modal — la durata è "congelata"
+  // al momento in cui l'allenamento è stato completato, non un cronometro live.
+  const [ora] = useState(() => Date.now())
+
   const stats = useMemo(() => {
-    // Durata
-    const durata = sessione.startedAt ? Date.now() - sessione.startedAt : null
+    const durata = sessione.startedAt ? ora - sessione.startedAt : null
 
     // Serie completate
     let serieCompletate = 0
     let serieTotali = 0
-    let volume = 0
 
     for (const es of esercizi) {
       if (es.isBodyweight) continue
       const sets = sessione.exercises[es.id]?.sets || []
       serieTotali += es.serie
       for (const s of sets) {
-        if (s.done) {
-          serieCompletate++
-          const w = parseFloat(s.weight)
-          if (!isNaN(w) && w > 0) volume += w
-        }
+        if (s.done) serieCompletate++
       }
     }
 
@@ -68,7 +66,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
     const completamento = serieTotali > 0 ? Math.round((serieCompletate / serieTotali) * 100) : 0
 
     return { durata, serieCompletate, serieTotali, completamento, pr }
-  }, [sessione, esercizi, sessioniCompletate])
+  }, [sessione, esercizi, sessioniCompletate, ora])
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 flex items-end">

@@ -56,6 +56,13 @@ export default function Oggi() {
   const dragTargetIdRef = useRef(null)
   const [showCompletionModal, setShowCompletionModal] = useState(false)
 
+  // Giorno effettivo — se giornoOverride punta a una sessione ormai eliminata,
+  // ricade sulla rotazione automatica senza bisogno di un effetto separato
+  const giornoOverrideEffettivo = giornoOverride && workoutData[giornoOverride] ? giornoOverride : null
+  const giornoEffettivo = giornoOverrideEffettivo ?? giornoOggi ?? ordineSessioni[0]
+  const giorno = workoutData[giornoEffettivo]
+  const colori = (giorno?.colore && COLORI_SESSIONE[giorno.colore]) || COLORI_SESSIONE.blue
+
   useEffect(() => {
     if (!dragId) return
 
@@ -115,16 +122,6 @@ export default function Oggi() {
 
   // Schermo sempre acceso durante la sessione
   useWakeLock(!!activeSession)
-
-  // Se la sessione puntata da giornoOverride è stata eliminata, torna alla rotazione automatica
-  useEffect(() => {
-    if (giornoOverride && !workoutData[giornoOverride]) setGiornoOverride(null)
-  }, [giornoOverride, workoutData])
-
-  // Giorno effettivo
-  const giornoEffettivo = giornoOverride ?? giornoOggi ?? ordineSessioni[0]
-  const giorno = workoutData[giornoEffettivo]
-  const colori = (giorno?.colore && COLORI_SESSIONE[giorno.colore]) || COLORI_SESSIONE.blue
 
   // Se non c'è nessuna sessione
   if (!giorno) {
@@ -284,7 +281,7 @@ export default function Oggi() {
             })()}
 
             {/* Indica override */}
-            {giornoOverride && giornoOverride !== giornoOggi && (
+            {giornoOverrideEffettivo && giornoOverrideEffettivo !== giornoOggi && (
               <p className="text-xs text-gray-500 mt-2">
                 {t.oggi.rotazioneAutomatica}{' '}
                 <button

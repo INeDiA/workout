@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { webdavProvider } from '../utils/webdav'
-import { serializeBackup, deserializeBackup } from '../utils/backupData'
+import { serializeBackup } from '../utils/backupData'
 import { rinnovaESalvaTokenGdrive } from '../utils/googleAuth'
 
 const STORAGE_KEY = 'sm_backup_provider'
@@ -22,7 +22,9 @@ function migrateOldToken() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ type: 'gdrive', ...parsed }))
       localStorage.removeItem('sm_gdrive_token')
     }
-  } catch {}
+  } catch {
+    // localStorage non disponibile o dato corrotto: ignora, si riparte da zero
+  }
 }
 
 function readConfig() {
@@ -44,7 +46,9 @@ function saveConfig(config) {
 export function useBackupProvider() {
   const [providerConfig, setProviderConfig] = useState(readConfig)
   const providerConfigRef = useRef(providerConfig)
-  providerConfigRef.current = providerConfig
+  useEffect(() => {
+    providerConfigRef.current = providerConfig
+  }, [providerConfig])
 
   // Gestisce il ritorno dal redirect OAuth Google
   useEffect(() => {

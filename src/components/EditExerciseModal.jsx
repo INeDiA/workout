@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X, Layers2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { GRUPPI_MUSCOLARI } from '../data/exerciseDatabase'
@@ -18,28 +18,25 @@ const FORM_VUOTO = {
 
 export default function EditExerciseModal({ esercizio, onSave, onClose }) {
   const { t, lingua } = useApp()
-  const [form, setForm] = useState(FORM_VUOTO)
+  // Il modal viene montato ex-novo ad ogni apertura (vedi {modalEsercizio !== null && ...}
+  // in Oggi.jsx), quindi basta un inizializzatore lazy per precompilare il form
+  const [form, setForm] = useState(() =>
+    esercizio
+      ? {
+          nome: esercizio.nome || '',
+          gruppo: esercizio.gruppo || '',
+          serie: esercizio.serie || 3,
+          reps: esercizio.reps || '10-12',
+          note: esercizio.note || '',
+          isBodyweight: esercizio.isBodyweight || false,
+          isTime: esercizio.isTime || false,
+          isShared: esercizio.isShared || false,
+          isInverted: esercizio.isInverted || false,
+        }
+      : FORM_VUOTO
+  )
 
   const gruppiMuscolari = [...GRUPPI_MUSCOLARI.map((g) => GRUPPO_LABELS[g]?.[lingua] ?? g), t.editExerciseModal.altro]
-
-  // Precompila il form se stiamo modificando un esercizio esistente
-  useEffect(() => {
-    if (esercizio) {
-      setForm({
-        nome: esercizio.nome || '',
-        gruppo: esercizio.gruppo || '',
-        serie: esercizio.serie || 3,
-        reps: esercizio.reps || '10-12',
-        note: esercizio.note || '',
-        isBodyweight: esercizio.isBodyweight || false,
-        isTime: esercizio.isTime || false,
-        isShared: esercizio.isShared || false,
-        isInverted: esercizio.isInverted || false,
-      })
-    } else {
-      setForm(FORM_VUOTO)
-    }
-  }, [esercizio])
 
   function set(campo, valore) {
     setForm((prev) => ({ ...prev, [campo]: valore }))

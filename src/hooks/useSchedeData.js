@@ -78,7 +78,11 @@ export function useSchedeData(lingua = 'en') {
   // Persiste schede su localStorage ad ogni aggiornamento
   useEffect(() => {
     if (schede !== null) {
-      try { localStorage.setItem('sm_schede', JSON.stringify(schede)) } catch {}
+      try {
+        localStorage.setItem('sm_schede', JSON.stringify(schede))
+      } catch {
+        // localStorage pieno o non disponibile: la sessione continua solo in memoria
+      }
     }
   }, [schede])
 
@@ -96,7 +100,9 @@ export function useSchedeData(lingua = 'en') {
       try {
         localStorage.setItem('sm_schede', JSON.stringify(schedeEffettive))
         localStorage.setItem('sm_scheda_attiva_id', JSON.stringify(idAttivo))
-      } catch {}
+      } catch {
+        // localStorage pieno o non disponibile: la sessione continua solo in memoria
+      }
     } else {
       // Primo avvio senza dati legacy: nessuna scheda creata in automatico,
       // l'utente sceglie tramite la schermata di onboarding (vedi necessitaOnboarding).

@@ -1,28 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { X } from 'lucide-react'
 import { COLORI_LISTA, COLORI_SESSIONE } from '../data/workout'
 import { useApp } from '../context/AppContext'
 
 export default function SessionEditModal({ sessione, onSave, onClose }) {
   const { t } = useApp()
-  const [nome, setNome] = useState('')
-  const [focus, setFocus] = useState('')
-  const [emoji, setEmoji] = useState('💪')
-  const [colore, setColore] = useState('blue')
-
-  useEffect(() => {
-    if (sessione) {
-      setNome(sessione.nome || '')
-      setFocus(sessione.focus || sessione.nome || '')
-      setEmoji(sessione.emoji || '💪')
-      setColore(sessione.colore || 'blue')
-    } else {
-      setNome('')
-      setFocus('')
-      setEmoji('💪')
-      setColore('blue')
-    }
-  }, [sessione])
+  // Il modal viene montato ex-novo ad ogni apertura, quindi bastano
+  // inizializzatori lazy per precompilare i campi da `sessione`
+  const [nome, setNome] = useState(() => sessione?.nome || '')
+  const [focus, setFocus] = useState(() => sessione?.focus || sessione?.nome || '')
+  const [emoji, setEmoji] = useState(() => sessione?.emoji || '💪')
+  const [colore, setColore] = useState(() => sessione?.colore || 'blue')
 
   function handleSubmit(e) {
     e.preventDefault()

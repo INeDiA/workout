@@ -82,10 +82,6 @@ export default function Storico() {
   }).length
   const freqSettimana = sessioni30gg > 0 ? (sessioni30gg / 4.3).toFixed(1) : '—'
 
-  // Esercizi per il grafico: dalla sessione selezionata della scheda attiva
-  const sessioneGrafico = giornoGrafico ? workoutData[giornoGrafico] : null
-  const eserciziGrafico = (sessioneGrafico?.esercizi || []).filter((e) => !e.isBodyweight)
-
   // Se la sessione selezionata non esiste più, usa la prima disponibile
   const giornoGraficoEffettivo =
     giornoGrafico && workoutData[giornoGrafico]
