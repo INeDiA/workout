@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { X, Download } from 'lucide-react'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { useApp } from '../context/AppContext'
 
 export default function InstallBanner() {
+  const { t } = useApp()
   const { isInstallable, isInstalled, triggerInstall } = useInstallPrompt()
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem('sm_install_dismissed') === 'true'
@@ -21,14 +23,14 @@ export default function InstallBanner() {
         <Download size={18} className="text-blue-200" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white">Aggiungi alla Home Screen</p>
-        <p className="text-xs text-blue-300 mt-0.5">Usa l'app offline, sempre con te</p>
+        <p className="text-sm font-semibold text-white">{t.installBanner.titolo}</p>
+        <p className="text-xs text-blue-300 mt-0.5">{t.installBanner.sottotitolo}</p>
       </div>
       <button
         onClick={triggerInstall}
         className="bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all flex-shrink-0"
       >
-        Installa
+        {t.installBanner.installa}
       </button>
       <button onClick={nascondi} className="text-blue-400 hover:text-blue-200 p-1 flex-shrink-0">
         <X size={16} />

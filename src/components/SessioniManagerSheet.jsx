@@ -6,6 +6,7 @@ import SessionEditModal from './SessionEditModal'
 
 export default function SessioniManagerSheet({ onClose }) {
   const {
+    t,
     schedaAttiva,
     riordinaSessioni,
     eliminaSessione,
@@ -52,7 +53,7 @@ export default function SessioniManagerSheet({ onClose }) {
       <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-5 flex-shrink-0">
-          <h2 className="text-lg font-bold text-white">Gestisci sessioni</h2>
+          <h2 className="text-lg font-bold text-white">{t.sessioniManagerSheet.titolo}</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
@@ -107,7 +108,7 @@ export default function SessioniManagerSheet({ onClose }) {
                     className={`p-1.5 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed ${
                       isConfermaElimina ? 'bg-red-700 hover:bg-red-600' : 'bg-gray-700 hover:bg-red-900'
                     }`}
-                    title={isConfermaElimina ? 'Tocca ancora per confermare' : 'Elimina sessione'}
+                    title={isConfermaElimina ? t.sessioniManagerSheet.toccaAncoraConferma : t.sessioniManagerSheet.eliminaSessione}
                   >
                     <Trash2 size={13} className={isConfermaElimina ? 'text-red-200' : 'text-red-400'} />
                   </button>
@@ -124,7 +125,7 @@ export default function SessioniManagerSheet({ onClose }) {
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={16} />
-            Nuova sessione
+            {t.sessioniManagerSheet.nuovaSessione}
           </button>
         </div>
       </div>

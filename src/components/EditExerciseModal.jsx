@@ -1,19 +1,8 @@
 import { useState, useEffect } from 'react'
 import { X, Layers2 } from 'lucide-react'
-
-const GRUPPI_MUSCOLARI = [
-  'Petto',
-  'Schiena',
-  'Spalle',
-  'Bicipiti',
-  'Tricipiti',
-  'Quadricipiti',
-  'Femorali',
-  'Glutei',
-  'Core',
-  'Polpacci',
-  'Altro',
-]
+import { useApp } from '../context/AppContext'
+import { GRUPPI_MUSCOLARI } from '../data/exerciseDatabase'
+import { GRUPPO_LABELS } from '../data/workout'
 
 const FORM_VUOTO = {
   nome: '',
@@ -28,7 +17,10 @@ const FORM_VUOTO = {
 }
 
 export default function EditExerciseModal({ esercizio, onSave, onClose }) {
+  const { t, lingua } = useApp()
   const [form, setForm] = useState(FORM_VUOTO)
+
+  const gruppiMuscolari = [...GRUPPI_MUSCOLARI.map((g) => GRUPPO_LABELS[g]?.[lingua] ?? g), t.editExerciseModal.altro]
 
   // Precompila il form se stiamo modificando un esercizio esistente
   useEffect(() => {
@@ -68,7 +60,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
         {/* Intestazione */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">
-            {esercizio ? 'Modifica esercizio' : 'Nuovo esercizio'}
+            {esercizio ? t.editExerciseModal.modificaEsercizio : t.editExerciseModal.nuovoEsercizio}
           </h2>
           <button
             onClick={onClose}
@@ -82,14 +74,14 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
           {/* Nome */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Nome esercizio *
+              {t.editExerciseModal.nomeEsercizio}
             </label>
             <input
               autoFocus
               type="text"
               value={form.nome}
               onChange={(e) => set('nome', e.target.value)}
-              placeholder="es. Panca piana manubri"
+              placeholder={t.editExerciseModal.placeholderNome}
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -97,15 +89,15 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
           {/* Gruppo muscolare */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Gruppo muscolare
+              {t.editExerciseModal.gruppoMuscolare}
             </label>
             <select
               value={form.gruppo}
               onChange={(e) => set('gruppo', e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500"
             >
-              <option value="">— Seleziona —</option>
-              {GRUPPI_MUSCOLARI.map((g) => (
+              <option value="">{t.editExerciseModal.selezionaGruppo}</option>
+              {gruppiMuscolari.map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>
@@ -116,7 +108,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
           {/* Serie + Ripetizioni */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-400 mb-1.5 block font-medium">Serie</label>
+              <label className="text-xs text-gray-400 mb-1.5 block font-medium">{t.editExerciseModal.serie}</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -129,13 +121,13 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
             </div>
             <div>
               <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-                Reps / Durata
+                {t.editExerciseModal.repsDurata}
               </label>
               <input
                 type="text"
                 value={form.reps}
                 onChange={(e) => set('reps', e.target.value)}
-                placeholder="es. 8-10  |  45 sec"
+                placeholder={t.editExerciseModal.placeholderReps}
                 className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -152,7 +144,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
                   : 'bg-gray-800 border-gray-700 text-gray-400'
               }`}
             >
-              Peso corporeo
+              {t.editExerciseModal.pesoCorporeo}
             </button>
             <button
               type="button"
@@ -163,7 +155,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
                   : 'bg-gray-800 border-gray-700 text-gray-400'
               }`}
             >
-              A tempo
+              {t.editExerciseModal.aTempo}
             </button>
             <button
               type="button"
@@ -174,7 +166,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
                   : 'bg-gray-800 border-gray-700 text-gray-400'
               }`}
             >
-              Assistenza
+              {t.editExerciseModal.assistenza}
             </button>
           </div>
 
@@ -189,18 +181,18 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
             }`}
           >
             <Layers2 size={13} />
-            Comune a tutte le sessioni
+            {t.editExerciseModal.comuneATutte}
           </button>
 
           {/* Note tecniche */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Note tecniche
+              {t.editExerciseModal.noteTecniche}
             </label>
             <textarea
               value={form.note}
               onChange={(e) => set('note', e.target.value)}
-              placeholder="Indicazioni sulla tecnica esecutiva…"
+              placeholder={t.editExerciseModal.placeholderNote}
               rows={3}
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
             />
@@ -212,7 +204,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
             disabled={!form.nome.trim()}
             className="w-full bg-blue-600 hover:bg-blue-500 active:scale-98 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl py-4 transition-all"
           >
-            {esercizio ? 'Salva modifiche' : 'Aggiungi esercizio'}
+            {esercizio ? t.editExerciseModal.salvaModifiche : t.editExerciseModal.aggiungiEsercizio}
           </button>
         </form>
       </div>

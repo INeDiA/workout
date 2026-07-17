@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useStorage'
 import { useSchedeData } from '../hooks/useSchedeData'
 import { useTimer } from '../hooks/useTimer'
 import { autoBackup } from '../utils/googleDrive'
+import { LINGUE, rilevaLinguaDispositivo } from '../i18n'
 
 const AppContext = createContext(null)
 
@@ -31,7 +32,16 @@ function dataOggi() {
 export function AppProvider({ children }) {
   const [sessions, setSessions] = useLocalStorage('sm_sessions', [])
   const [activeSession, setActiveSession] = useLocalStorage('sm_active_session', null)
-  const [settings, setSettings] = useLocalStorage('sm_settings', { timerDuration: 90, giorniSettimana: 3 })
+  const [settings, setSettings] = useLocalStorage('sm_settings', {
+    timerDuration: 90,
+    giorniSettimana: 3,
+    lingua: rilevaLinguaDispositivo(),
+  })
+
+  // Utenti legacy: sm_settings già esisteva prima dell'introduzione di `lingua`.
+  // Fallback al rilevamento dispositivo se il campo manca.
+  const lingua = settings.lingua ?? rilevaLinguaDispositivo()
+  const t = LINGUE[lingua]
 
   // Timer a livello di context — persiste attraverso i cambi di tab
   const timer = useTimer(settings.timerDuration)
@@ -43,7 +53,7 @@ export function AppProvider({ children }) {
     localStorage.removeItem('sm_recovery_log')
   }, [])
 
-  const schedeData = useSchedeData()
+  const schedeData = useSchedeData(lingua)
   const {
     schede,
     schedaAttiva,
@@ -220,6 +230,8 @@ export function AppProvider({ children }) {
         activeSession,
         settings,
         setSettings,
+        lingua,
+        t,
         giornoOggi,
         ordineSessioni,
         streak,

@@ -7,8 +7,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useApp } from '../context/AppContext'
 
 export default function ProgressChart({ esercizioId, nomeEsercizio, sessions, isInverted = false }) {
+  const { t } = useApp()
   // Estrai il peso rappresentativo per ogni sessione (ultimi 8 allenamenti con dati)
   // Per esercizi normali: massimo. Per esercizi ad assistenza (isInverted): minimo.
   const agg = isInverted ? Math.min : Math.max
@@ -35,8 +37,8 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions, is
         <p className="text-sm font-semibold text-white mb-1">{nomeEsercizio}</p>
         <p className="text-xs text-gray-500">
           {data.length === 0
-            ? 'Nessun dato ancora. Inserisci i pesi durante l\'allenamento!'
-            : 'Servono almeno 2 sessioni con dati per il grafico.'}
+            ? t.progressChart.nessunDato
+            : t.progressChart.servono2Sessioni}
         </p>
       </div>
     )
@@ -83,7 +85,7 @@ export default function ProgressChart({ esercizioId, nomeEsercizio, sessions, is
                 <span style={{ color: isPR ? '#f59e0b' : '#3b82f6' }}>
                   {val} kg{isPR ? ' 🏆' : ''}
                 </span>,
-                'Peso max',
+                t.progressChart.pesoMax,
               ]
             }}
           />

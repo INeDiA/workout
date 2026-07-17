@@ -1,12 +1,15 @@
 import { Dumbbell, BarChart2, Settings } from 'lucide-react'
-
-const TABS = [
-  { id: 'oggi', label: 'Scheda', Icon: Dumbbell },
-  { id: 'storico', label: 'Storico', Icon: BarChart2 },
-  { id: 'impostazioni', label: 'Impostazioni', Icon: Settings },
-]
+import { useApp } from '../context/AppContext'
 
 export default function BottomNav({ tab, onChange }) {
+  const { t } = useApp()
+
+  const TABS = [
+    { id: 'oggi', label: t.bottomNav.scheda, Icon: Dumbbell },
+    { id: 'storico', label: t.bottomNav.storico, Icon: BarChart2 },
+    { id: 'impostazioni', label: t.bottomNav.impostazioni, Icon: Settings },
+  ]
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950 border-t border-gray-800 pb-safe">
       <div className="flex">

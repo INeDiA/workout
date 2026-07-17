@@ -13,6 +13,7 @@ import { COLORI_SESSIONE } from '../data/workout'
 
 export default function Oggi() {
   const {
+    t,
     giornoOggi,
     ordineSessioni,
     workoutData,
@@ -130,12 +131,12 @@ export default function Oggi() {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Nessuna sessione nella scheda attiva.</p>
+          <p className="text-gray-400 mb-4">{t.oggi.nessunaSessione}</p>
           <button
             onClick={() => setShowSessionModal(true)}
             className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-semibold"
           >
-            Aggiungi sessione
+            {t.oggi.aggiungiSessione}
           </button>
           {showSessionModal && (
             <SessionEditModal
@@ -234,7 +235,7 @@ export default function Oggi() {
 
         <h1 className="text-2xl font-bold text-white leading-tight">{giorno.focus || giorno.nome}</h1>
         <p className="text-sm text-gray-400 mt-1">
-          {giorno.esercizi.length} esercizi · {totSerie} serie totali
+          {giorno.esercizi.length} {t.oggi.esercizi} · {totSerie} {t.oggi.serieTotali}
         </p>
 
         {/* Selettore sessione — visibile senza sessione attiva */}
@@ -285,12 +286,12 @@ export default function Oggi() {
             {/* Indica override */}
             {giornoOverride && giornoOverride !== giornoOggi && (
               <p className="text-xs text-gray-500 mt-2">
-                Rotazione automatica:{' '}
+                {t.oggi.rotazioneAutomatica}{' '}
                 <button
                   onClick={() => setGiornoOverride(null)}
                   className="text-blue-400 hover:text-blue-300 underline"
                 >
-                  torna a {workoutData[giornoOggi]?.nome || giornoOggi}
+                  {t.oggi.tornaA} {workoutData[giornoOggi]?.nome || giornoOggi}
                 </button>
               </p>
             )}
@@ -326,7 +327,7 @@ export default function Oggi() {
             className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 active:scale-98 text-white font-semibold rounded-2xl py-4 transition-all shadow-lg shadow-blue-950"
           >
             <Play size={20} fill="white" />
-            Inizia Allenamento
+            {t.oggi.iniziaAllenamento}
           </button>
         )}
 
@@ -395,7 +396,7 @@ export default function Oggi() {
                     <div className="flex-1 h-px bg-gray-800" />
                     <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
                       <Layers2 size={12} />
-                      <span>Comuni a tutte le sessioni</span>
+                      <span>{t.oggi.comuniATutte}</span>
                     </div>
                     <div className="flex-1 h-px bg-gray-800" />
                   </div>
@@ -413,7 +414,7 @@ export default function Oggi() {
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-4 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={18} />
-            Aggiungi esercizio
+            {t.oggi.aggiungiEsercizio}
           </button>
         )}
 
@@ -424,7 +425,7 @@ export default function Oggi() {
               <div className="flex items-start gap-2 bg-amber-950 border border-amber-800 rounded-xl p-3">
                 <AlertTriangle size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-300">
-                  Hai completato solo il {percentuale}% delle serie. Vuoi concludere comunque?
+                  {t.oggi.completatoParzialmente.replace('{percentuale}', percentuale)}
                 </p>
               </div>
             )}
@@ -439,7 +440,7 @@ export default function Oggi() {
               }`}
             >
               {percentuale >= 100 ? <Award size={20} /> : <CheckCircle size={20} />}
-              {confermaIncompleto ? 'Sì, concludi comunque' : 'Completa Allenamento'}
+              {confermaIncompleto ? t.oggi.siConcludiComunque : t.oggi.completaAllenamento}
             </button>
 
             {/* Annulla sessione */}
@@ -455,7 +456,7 @@ export default function Oggi() {
                   : 'bg-transparent border-gray-800 text-gray-600 hover:text-gray-400'
               }`}
             >
-              {confermaAnnulla ? 'Conferma: annulla e scarta i dati' : 'Annulla allenamento'}
+              {confermaAnnulla ? t.oggi.confermaAnnullaAllenamento : t.oggi.annullaAllenamento}
             </button>
           </div>
         )}

@@ -11,7 +11,7 @@ import SessioniManagerSheet from '../components/SessioniManagerSheet'
 const DURATE_TIMER = [60, 90, 120, 150, 180]
 
 export default function Impostazioni() {
-  const { schedaAttiva, settings, setSettings, resetSchedaDefault } = useApp()
+  const { t, lingua, schedaAttiva, settings, setSettings, resetSchedaDefault } = useApp()
   const [showSchedeSheet, setShowSchedeSheet] = useState(false)
   const [showSessioniManager, setShowSessioniManager] = useState(false)
   const [passoResetScheda, setPassoResetScheda] = useState(0)
@@ -54,9 +54,9 @@ export default function Impostazioni() {
     setCloudLoading(true); setCloudError(null); setCloudSuccess(null)
     try {
       await providerUpload()
-      setCloudSuccess('Backup completato.')
+      setCloudSuccess(t.impostazioni.backupCompletato)
     } catch (err) {
-      setCloudError(err.message || 'Backup fallito. Riprova.')
+      setCloudError(err.message || t.impostazioni.backupFallito)
     } finally {
       setCloudLoading(false)
     }
@@ -69,7 +69,7 @@ export default function Impostazioni() {
       deserializeBackup(dati)
       window.location.reload()
     } catch (err) {
-      setCloudError(err.message || 'Ripristino fallito.')
+      setCloudError(err.message || t.impostazioni.ripristinoFallito)
     } finally {
       setCloudLoading(false)
     }
@@ -77,7 +77,7 @@ export default function Impostazioni() {
 
   const ultimoBackup = localStorage.getItem('sm_ultimo_backup')
   const ultimoBackupStr = ultimoBackup
-    ? new Date(ultimoBackup).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    ? new Date(ultimoBackup).toLocaleDateString(t.storico.localeData, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
     : null
 
   function set(campo, valore) {
@@ -96,7 +96,7 @@ export default function Impostazioni() {
       const file = new File([blob], fileName, { type: 'application/json' })
       if (navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], title: 'Backup allenamento' })
+          await navigator.share({ files: [file], title: t.impostazioni.condividiBackupTitolo })
           localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
           return
         } catch (err) {
@@ -109,7 +109,7 @@ export default function Impostazioni() {
     // Strategia 2: condivisione come testo (Android — apre il foglio di condivisione)
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Backup allenamento', text: json })
+        await navigator.share({ title: t.impostazioni.condividiBackupTitolo, text: json })
         localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
         return
       } catch (err) {
@@ -141,7 +141,7 @@ export default function Impostazioni() {
         deserializeBackup(dati)
         window.location.reload()
       } catch {
-        setErroreImport('File non riconosciuto. Assicurati di usare un backup generato da questa app.')
+        setErroreImport(t.impostazioni.fileNonRiconosciuto)
       }
     }
     reader.readAsText(file)
@@ -165,8 +165,8 @@ export default function Impostazioni() {
   return (
     <div className="min-h-screen bg-gray-950 pb-24">
       <div className="pt-safe px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold text-white">Impostazioni</h1>
-        <p className="text-sm text-gray-400 mt-1">Scheda, backup e app</p>
+        <h1 className="text-2xl font-bold text-white">{t.impostazioni.titolo}</h1>
+        <p className="text-sm text-gray-400 mt-1">{t.impostazioni.sottotitolo}</p>
       </div>
 
       <div className="px-4 space-y-4">
@@ -174,7 +174,7 @@ export default function Impostazioni() {
         {/* ── App (solo se non installata) ─────────────────────────── */}
         {!isInstalled && (
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">App</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t.impostazioni.app}</p>
             {isInstallable ? (
               <button
                 onClick={triggerInstall}
@@ -182,26 +182,26 @@ export default function Impostazioni() {
               >
                 <Download size={15} className="text-blue-400 flex-shrink-0" />
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-white">Installa app</p>
-                  <p className="text-xs text-blue-300 mt-0.5">Aggiungi alla schermata Home per usarla offline</p>
+                  <p className="text-sm font-semibold text-white">{t.impostazioni.installaApp}</p>
+                  <p className="text-xs text-blue-300 mt-0.5">{t.impostazioni.installaAppDesc}</p>
                 </div>
               </button>
             ) : isIOS ? (
               <div className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3">
-                <p className="text-sm font-semibold text-white mb-2">Installa su iPhone / iPad</p>
+                <p className="text-sm font-semibold text-white mb-2">{t.impostazioni.installaIOSTitolo}</p>
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  1. Tocca il tasto <span className="text-white">Condividi</span> ⎙ nella barra di Safari<br />
-                  2. Scorri e scegli <span className="text-white">Aggiungi a schermata Home</span><br />
-                  3. Tocca <span className="text-white">Aggiungi</span>
+                  1. {t.impostazioni.installaIOS1} <span className="text-white">{t.impostazioni.installaIOSCondividi}</span> ⎙ {t.impostazioni.installaIOS1b}<br />
+                  2. {t.impostazioni.installaIOS2} <span className="text-white">{t.impostazioni.installaIOSAggiungi}</span><br />
+                  3. {t.impostazioni.installaIOS3} <span className="text-white">{t.impostazioni.installaIOSConferma}</span>
                 </p>
               </div>
             ) : (
               <div className="bg-gray-800 border border-gray-700 rounded-xl px-4 py-3">
-                <p className="text-sm font-semibold text-white mb-2">Installa l'app</p>
+                <p className="text-sm font-semibold text-white mb-2">{t.impostazioni.installaAltroTitolo}</p>
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  1. Tocca il menu <span className="text-white">⋮</span> in alto a destra nel browser<br />
-                  2. Scegli <span className="text-white">Aggiungi a schermata Home</span> (o "Installa app")<br />
-                  3. Conferma
+                  1. {t.impostazioni.installaAltro1}<br />
+                  2. {t.impostazioni.installaAltro2} <span className="text-white">{t.impostazioni.installaIOSAggiungi}</span> {t.impostazioni.installaAltro2b}<br />
+                  3. {t.impostazioni.installaAltro3}
                 </p>
               </div>
             )}
@@ -210,14 +210,14 @@ export default function Impostazioni() {
 
         {/* ── Scheda attiva ────────────────────────────────────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Scheda attiva</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t.impostazioni.schedaAttiva}</p>
           <button
             onClick={() => setShowSchedeSheet(true)}
             className="w-full flex items-center justify-between bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-3.5 transition-colors mb-2"
           >
             <div className="text-left">
-              <p className="text-sm font-semibold text-white">{schedaAttiva?.nome || 'Nessuna scheda'}</p>
-              <p className="text-xs text-gray-400 mt-0.5">Gestisci schede</p>
+              <p className="text-sm font-semibold text-white">{schedaAttiva?.nome || t.impostazioni.nessunaScheda}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t.impostazioni.gestisciSchede}</p>
             </div>
             <ChevronRight size={18} className="text-gray-500" />
           </button>
@@ -227,8 +227,8 @@ export default function Impostazioni() {
             className="w-full flex items-center justify-between bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-3.5 transition-colors mb-2"
           >
             <div className="text-left">
-              <p className="text-sm font-semibold text-white">Sessioni</p>
-              <p className="text-xs text-gray-400 mt-0.5">{schedaAttiva?.sessioni?.length || 0} sessioni · rinomina, riordina, elimina</p>
+              <p className="text-sm font-semibold text-white">{t.impostazioni.sessioni}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t.impostazioni.sessioniDesc.replace('{n}', schedaAttiva?.sessioni?.length || 0)}</p>
             </div>
             <ChevronRight size={18} className="text-gray-500" />
           </button>
@@ -237,7 +237,7 @@ export default function Impostazioni() {
             <div className="flex items-start gap-2 bg-amber-950 border border-amber-800 rounded-xl p-3 mb-2">
               <AlertTriangle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-300 leading-relaxed">
-                Tutte le sessioni ed esercizi personalizzati di questa scheda verranno sostituiti con quelli di default.
+                {t.impostazioni.ripristinaDefaultWarning}
               </p>
             </div>
           )}
@@ -250,17 +250,17 @@ export default function Impostazioni() {
             }`}
           >
             <RotateCcw size={13} />
-            {passoResetScheda > 0 ? 'Conferma ripristino' : 'Ripristina esercizi di default'}
+            {passoResetScheda > 0 ? t.impostazioni.confermaRipristino : t.impostazioni.ripristinaDefault}
           </button>
         </div>
 
         {/* ── Allenamento ──────────────────────────────────────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Allenamento</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t.impostazioni.allenamento}</p>
 
           <div className="mb-4">
-            <p className="text-sm font-semibold text-white mb-1">Giorni di allenamento</p>
-            <p className="text-xs text-gray-400 mb-3">Quante sessioni ruotano nella settimana.</p>
+            <p className="text-sm font-semibold text-white mb-1">{t.impostazioni.giorniAllenamento}</p>
+            <p className="text-xs text-gray-400 mb-3">{t.impostazioni.giorniAllenamentoDesc}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
@@ -279,8 +279,8 @@ export default function Impostazioni() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-white mb-1">Durata recupero default</p>
-            <p className="text-xs text-gray-400 mb-3">Durata del timer che parte dopo ogni serie.</p>
+            <p className="text-sm font-semibold text-white mb-1">{t.impostazioni.durataRecupero}</p>
+            <p className="text-xs text-gray-400 mb-3">{t.impostazioni.durataRecuperoDesc}</p>
             <div className="flex gap-2 flex-wrap">
               {DURATE_TIMER.map((d) => (
                 <button
@@ -299,10 +299,37 @@ export default function Impostazioni() {
           </div>
         </div>
 
+        {/* ── Lingua ───────────────────────────────────────────────── */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t.impostazioni.lingua}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => set('lingua', 'it')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                lingua === 'it'
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {t.impostazioni.italiano}
+            </button>
+            <button
+              onClick={() => set('lingua', 'en')}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
+                lingua === 'en'
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+              }`}
+            >
+              {t.impostazioni.inglese}
+            </button>
+          </div>
+        </div>
+
         {/* ── Backup e dati ────────────────────────────────────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
           <div className="flex items-baseline justify-between mb-3">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Backup e dati</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t.impostazioni.backupEDati}</p>
             {ultimoBackupStr && <p className="text-xs text-gray-600">{ultimoBackupStr}</p>}
           </div>
 
@@ -312,7 +339,7 @@ export default function Impostazioni() {
               className="w-full flex items-center gap-3 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2.5 text-left active:scale-98 transition-all mb-2">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
               <p className="text-xs text-amber-300">
-                {ultimoBackup ? 'Ultimo backup > 30 giorni. Tocca per esportare.' : 'Nessun backup. Tocca per esportare.'}
+                {ultimoBackup ? t.impostazioni.backupVecchio : t.impostazioni.nessunBackup}
               </p>
             </button>
           )}
@@ -321,8 +348,8 @@ export default function Impostazioni() {
           {providerConfig?.type === 'gdrive' && !providerValido && (
             <div className="flex items-center gap-2 bg-amber-950 border border-amber-800 rounded-xl px-3 py-2 mb-2">
               <AlertTriangle size={12} className="text-amber-400 flex-shrink-0" />
-              <p className="text-xs text-amber-300 flex-1">Sessione Google Drive scaduta</p>
-              <button onClick={connectGdrive} className="text-xs font-medium text-amber-200 underline">Ricollegati</button>
+              <p className="text-xs text-amber-300 flex-1">{t.impostazioni.sessioneGDriveScaduta}</p>
+              <button onClick={connectGdrive} className="text-xs font-medium text-amber-200 underline">{t.impostazioni.ricollegati}</button>
             </div>
           )}
 
@@ -342,24 +369,24 @@ export default function Impostazioni() {
           {showWebdavForm && (
             <form onSubmit={handleConnectWebdav} className="space-y-2 mb-2">
               <input value={wdUrl} onChange={(e) => setWdUrl(e.target.value)} required
-                placeholder="https://nextcloud.example.com/remote.php/dav/files/user/"
+                placeholder={t.impostazioni.placeholderWebdavUrl}
                 className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
               <div className="grid grid-cols-2 gap-2">
                 <input value={wdUser} onChange={(e) => setWdUser(e.target.value)} required
-                  placeholder="Utente"
+                  placeholder={t.impostazioni.placeholderUtente}
                   className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
                 <input value={wdPass} onChange={(e) => setWdPass(e.target.value)} required
-                  type="password" placeholder="App password"
+                  type="password" placeholder={t.impostazioni.placeholderAppPassword}
                   className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => { setShowWebdavForm(false); setCloudError(null) }}
                   className="py-2 rounded-xl text-xs font-medium text-gray-400 bg-gray-800 border border-gray-700 active:scale-98 transition-all">
-                  Annulla
+                  {t.common.annulla}
                 </button>
                 <button type="submit" disabled={cloudLoading}
                   className="py-2 rounded-xl text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 active:scale-98 transition-all disabled:opacity-50">
-                  {cloudLoading ? 'Connessione…' : 'Connetti'}
+                  {cloudLoading ? t.impostazioni.connessione : t.impostazioni.connetti}
                 </button>
               </div>
             </form>
@@ -372,32 +399,32 @@ export default function Impostazioni() {
                 <>
                   <button onClick={backupOra} disabled={cloudLoading}
                     className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50">
-                    <CloudUpload size={13} />{cloudLoading ? '…' : 'Backup'}
+                    <CloudUpload size={13} />{cloudLoading ? '…' : t.impostazioni.backup}
                   </button>
                   <button onClick={ripristinaCloud} disabled={cloudLoading}
                     className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98 disabled:opacity-50">
-                    <CloudDownload size={13} />{cloudLoading ? '…' : 'Ripristina'}
+                    <CloudDownload size={13} />{cloudLoading ? '…' : t.impostazioni.ripristina}
                   </button>
                 </>
               ) : (
                 <>
                   <button onClick={connectGdrive}
                     className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
-                    <CloudUpload size={13} />Google Drive
+                    <CloudUpload size={13} />{t.impostazioni.googleDrive}
                   </button>
                   <button onClick={() => { setShowWebdavForm(true); setCloudError(null) }}
                     className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
-                    <Globe size={13} />WebDAV
+                    <Globe size={13} />{t.impostazioni.webdav}
                   </button>
                 </>
               )}
               <button onClick={esportaDati}
                 className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
-                <Share2 size={13} />Esporta
+                <Share2 size={13} />{t.impostazioni.esporta}
               </button>
               <button onClick={() => inputFileRef.current?.click()}
                 className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
-                <Upload size={13} />Importa
+                <Upload size={13} />{t.impostazioni.importa}
               </button>
             </div>
           )}
@@ -415,15 +442,15 @@ export default function Impostazioni() {
 
         {/* ── Zona pericolosa ──────────────────────────────────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Zona pericolosa</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">{t.impostazioni.zonaPericolosa}</p>
 
           {passoReset > 0 && (
             <div className="flex items-start gap-2 bg-red-950 border border-red-800 rounded-xl p-3 mb-3">
               <AlertTriangle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-red-300 leading-relaxed">
                 {passoReset === 1
-                  ? 'Verranno cancellati tutti gli allenamenti, le schede personalizzate e le impostazioni. Questa azione è irreversibile.'
-                  : 'Ultima conferma — dopo non si torna indietro.'}
+                  ? t.impostazioni.cancellaAvviso
+                  : t.impostazioni.ultimaConferma}
               </p>
             </div>
           )}
@@ -438,9 +465,9 @@ export default function Impostazioni() {
                 : 'bg-red-700 border-red-600 text-white'
             }`}
           >
-            {passoReset === 0 && 'Cancella tutti i dati'}
-            {passoReset === 1 && 'Sei sicuro? Tocca ancora per continuare'}
-            {passoReset === 2 && 'Sì, cancella tutto e ricomincia'}
+            {passoReset === 0 && t.impostazioni.cancellaTuttiIDati}
+            {passoReset === 1 && t.impostazioni.seiSicuro}
+            {passoReset === 2 && t.impostazioni.siCancellaTutto}
           </button>
 
           {passoReset > 0 && (
@@ -448,7 +475,7 @@ export default function Impostazioni() {
               onClick={() => setPassoReset(0)}
               className="w-full mt-2 py-2 text-xs text-gray-600 hover:text-gray-400 transition-colors"
             >
-              Annulla
+              {t.common.annulla}
             </button>
           )}
         </div>

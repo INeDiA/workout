@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { COLORI_LISTA, COLORI_SESSIONE } from '../data/workout'
+import { useApp } from '../context/AppContext'
 
 export default function SessionEditModal({ sessione, onSave, onClose }) {
+  const { t } = useApp()
   const [nome, setNome] = useState('')
   const [focus, setFocus] = useState('')
   const [emoji, setEmoji] = useState('💪')
@@ -37,7 +39,7 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-white">
-            {sessione ? 'Modifica sessione' : 'Nuova sessione'}
+            {sessione ? t.sessionEditModal.modificaSessione : t.sessionEditModal.nuovaSessione}
           </h2>
           <button
             onClick={onClose}
@@ -51,14 +53,14 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
           {/* Focus / titolo */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-              Titolo <span className="text-gray-600 font-normal">(header)</span>
+              {t.sessionEditModal.titolo} <span className="text-gray-600 font-normal">{t.sessionEditModal.header}</span>
             </label>
             <input
               autoFocus
               type="text"
               value={focus}
               onChange={(e) => setFocus(e.target.value)}
-              placeholder="es. Petto · Tricipiti · Spalle"
+              placeholder={t.sessionEditModal.placeholderTitolo}
               className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
             />
           </div>
@@ -66,7 +68,7 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
           {/* Emoji + Nome breve sulla stessa riga */}
           <div className="flex items-end gap-3">
             <div>
-              <label className="text-xs text-gray-400 mb-1.5 block font-medium">Emoji</label>
+              <label className="text-xs text-gray-400 mb-1.5 block font-medium">{t.sessionEditModal.emoji}</label>
               <input
                 type="text"
                 value={emoji}
@@ -82,13 +84,13 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
             </div>
             <div className="flex-1">
               <label className="text-xs text-gray-400 mb-1.5 block font-medium">
-                Nome breve * <span className="text-gray-600 font-normal">(pill)</span>
+                {t.sessionEditModal.nomeBreve} <span className="text-gray-600 font-normal">{t.sessionEditModal.pill}</span>
               </label>
               <input
                 type="text"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                placeholder="es. Push"
+                placeholder={t.sessionEditModal.placeholderNome}
                 className="w-full h-12 bg-gray-800 border border-gray-700 rounded-xl px-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -97,7 +99,7 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
           {/* Selettore colore */}
           <div>
             <label className="text-xs text-gray-400 mb-2 block font-medium">
-              Colore
+              {t.sessionEditModal.colore}
             </label>
             <div className="flex gap-3">
               {COLORI_LISTA.map((c) => (
@@ -121,7 +123,7 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
             disabled={!nome.trim()}
             className="w-full bg-blue-600 hover:bg-blue-500 active:scale-98 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-2xl py-4 transition-all mt-2"
           >
-            {sessione ? 'Salva modifiche' : 'Crea sessione'}
+            {sessione ? t.sessionEditModal.salvaModifiche : t.sessionEditModal.creaSessione}
           </button>
         </form>
       </div>

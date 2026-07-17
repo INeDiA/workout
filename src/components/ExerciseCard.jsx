@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronUp, Info, Pencil, Trash2, GripVertical } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 const REVEAL_WIDTH = 132
 
@@ -7,6 +8,7 @@ export default function ExerciseCard({
   esercizio, datiSerie = [], onAggiornaSerie, defaultExpanded = false, onSaveMemo,
   open = false, onOpenChange, onEdit, onDelete, onDragHandleStart,
 }) {
+  const { t } = useApp()
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [memoValue, setMemoValue] = useState(esercizio.memo || '')
   const [confermaElimina, setConfermaElimina] = useState(false)
@@ -203,7 +205,7 @@ export default function ExerciseCard({
                 {nome}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {serie} serie × {reps}
+                {serie} {t.exerciseCard.serieConteggio} × {reps}
                 <span className="mx-1">·</span>
                 {gruppo}
               </p>
@@ -234,7 +236,7 @@ export default function ExerciseCard({
                 value={memoValue}
                 onChange={(e) => setMemoValue(e.target.value)}
                 onBlur={() => onSaveMemo(memoValue.trim())}
-                placeholder="Appunti…"
+                placeholder={t.exerciseCard.appunti}
                 rows={2}
                 maxLength={200}
                 className="w-full bg-gray-800/50 border border-gray-700/50 rounded-xl px-3 py-2 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-gray-600 resize-none"
@@ -260,11 +262,11 @@ export default function ExerciseCard({
                 </button>
 
                 <span className="text-xs text-gray-500 w-14 flex-shrink-0">
-                  Serie {idx + 1}
+                  {t.exerciseCard.serie} {idx + 1}
                 </span>
 
                 <span className="text-xs text-gray-500 w-16 flex-shrink-0">
-                  {isTime ? reps : `${reps} reps`}
+                  {isTime ? reps : `${reps} ${t.exerciseCard.reps}`}
                 </span>
 
                 {/* Input peso (non per esercizi isometrici come plank) */}

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { Trophy, Clock, BarChart2, Flame } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 function formatDurata(ms) {
   const min = Math.round(ms / 60000)
@@ -10,6 +11,7 @@ function formatDurata(ms) {
 }
 
 export default function CompletionModal({ sessione, workoutData, sessioniCompletate, streak, onConferma }) {
+  const { t } = useApp()
   const giorno = workoutData[sessione.dayId]
   const esercizi = giorno?.esercizi || []
 
@@ -77,7 +79,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
           <div className="w-16 h-16 bg-green-900 border border-green-700 rounded-full flex items-center justify-center mb-3">
             <Trophy size={28} className="text-green-400" />
           </div>
-          <h2 className="text-xl font-bold text-white">Allenamento completato</h2>
+          <h2 className="text-xl font-bold text-white">{t.completionModal.titolo}</h2>
           {giorno && (
             <p className="text-sm text-gray-400 mt-1">{giorno.emoji} {giorno.focus || giorno.nome}</p>
           )}
@@ -89,19 +91,19 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
             <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center">
               <Clock size={16} className="text-blue-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">{formatDurata(stats.durata)}</p>
-              <p className="text-xs text-gray-500">Durata</p>
+              <p className="text-xs text-gray-500">{t.completionModal.durata}</p>
             </div>
           )}
           <div className="bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center">
             <BarChart2 size={16} className="text-cyan-400 mx-auto mb-1" />
             <p className="text-lg font-bold text-white">{stats.serieCompletate}/{stats.serieTotali}</p>
-            <p className="text-xs text-gray-500">Serie</p>
+            <p className="text-xs text-gray-500">{t.completionModal.serie}</p>
           </div>
           {streak > 0 && (
             <div className="col-span-2 bg-gray-800 border border-gray-700 rounded-2xl p-4 text-center">
               <Flame size={16} className="text-orange-400 mx-auto mb-1" />
               <p className="text-lg font-bold text-white">
-                {streak} {streak === 1 ? 'settimana' : 'settimane'} di fila
+                {streak} {streak === 1 ? t.completionModal.streakSettimana : t.completionModal.streakSettimane} {t.completionModal.diFila}
               </p>
               <p className="text-xs text-gray-500">Streak</p>
             </div>
@@ -112,7 +114,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
         {stats.serieTotali > 0 && (
           <div className="mb-4">
             <div className="flex justify-between mb-1.5">
-              <span className="text-xs text-gray-500">Completamento</span>
+              <span className="text-xs text-gray-500">{t.completionModal.completamento}</span>
               <span className="text-xs font-semibold text-white">{stats.completamento}%</span>
             </div>
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
@@ -128,7 +130,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
         {stats.pr.length > 0 && (
           <div className="bg-amber-950/60 border border-amber-800/50 rounded-2xl p-4 mb-4">
             <p className="text-xs font-semibold text-amber-400 mb-2">
-              🏆 {stats.pr.length === 1 ? 'Nuovo personal record' : `${stats.pr.length} nuovi personal record`}
+              🏆 {stats.pr.length === 1 ? t.completionModal.nuovoPR : `${stats.pr.length} ${t.completionModal.nuoviPR}`}
             </p>
             {stats.pr.map((p, i) => (
               <div key={i} className="flex items-center justify-between py-1">
@@ -143,7 +145,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
           onClick={onConferma}
           className="w-full bg-green-600 hover:bg-green-500 active:scale-98 text-white font-semibold rounded-2xl py-4 transition-all"
         >
-          Chiudi
+          {t.completionModal.chiudi}
         </button>
       </div>
     </div>

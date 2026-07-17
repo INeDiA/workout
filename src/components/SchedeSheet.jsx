@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 
 export default function SchedeSheet({ onClose }) {
   const {
+    t,
     schede,
     schedaAttiva,
     setSchedaAttiva,
@@ -41,7 +42,7 @@ export default function SchedeSheet({ onClose }) {
 
   function handleCrea() {
     const n = (schede?.length || 0) + 1
-    const nuova = creaScheda(`Nuova scheda ${n}`)
+    const nuova = creaScheda(`${t.schedeSheet.nuovaScheda} ${n}`)
     setSchedaAttiva(nuova.id)
   }
 
@@ -64,7 +65,7 @@ export default function SchedeSheet({ onClose }) {
       <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10 max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-5 flex-shrink-0">
-          <h2 className="text-lg font-bold text-white">Le mie schede</h2>
+          <h2 className="text-lg font-bold text-white">{t.schedeSheet.titolo}</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
@@ -125,7 +126,7 @@ export default function SchedeSheet({ onClose }) {
                         {scheda.nome}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {scheda.sessioni?.length || 0} sessioni
+                        {scheda.sessioni?.length || 0} {t.schedeSheet.sessioni}
                       </p>
                     </>
                   )}
@@ -162,7 +163,7 @@ export default function SchedeSheet({ onClose }) {
                         ? 'bg-red-700 hover:bg-red-600'
                         : 'bg-gray-700 hover:bg-red-900'
                     }`}
-                    title={isConfermaElimina ? 'Tocca ancora per confermare' : 'Elimina scheda'}
+                    title={isConfermaElimina ? t.schedeSheet.toccaAncoraConferma : t.schedeSheet.eliminaScheda}
                   >
                     <Trash2 size={13} className={isConfermaElimina ? 'text-red-200' : 'text-red-400'} />
                   </button>
@@ -179,14 +180,14 @@ export default function SchedeSheet({ onClose }) {
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={16} />
-            Nuova scheda
+            {t.schedeSheet.nuovaScheda}
           </button>
           <button
             onClick={handleCreaStandard}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
           >
             <Plus size={16} />
-            Scheda standard
+            {t.schedeSheet.schedaStandard}
           </button>
         </div>
       </div>

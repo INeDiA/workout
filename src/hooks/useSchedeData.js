@@ -1,9 +1,30 @@
 import { useState, useEffect } from 'react'
 import { useLocalStorage } from './useStorage'
-import { SCHEDA_DEFAULT, GIORNI_DEFAULT } from '../data/workout'
+import { GIORNI_DEFAULT, GRUPPO_LABELS } from '../data/workout'
 
 function generaId() {
   return Date.now().toString() + Math.random().toString(36).slice(2)
+}
+
+// Risolve un esercizio del catalogo bilingue (nome/note come {it,en}, gruppo come chiave)
+// in un esercizio "piatto" con stringhe nella lingua richiesta — da quel momento in poi
+// è testo normale, indistinguibile da un esercizio scritto a mano dall'utente.
+function risolviEsercizio(es, lingua) {
+  return {
+    ...es,
+    nome: typeof es.nome === 'object' ? es.nome[lingua] : es.nome,
+    note: typeof es.note === 'object' ? (es.note[lingua] ?? '') : (es.note || ''),
+    gruppo: GRUPPO_LABELS[es.gruppo]?.[lingua] ?? es.gruppo,
+  }
+}
+
+function risolviSessione(giorno, lingua) {
+  return {
+    ...giorno,
+    nome: typeof giorno.nome === 'object' ? giorno.nome[lingua] : giorno.nome,
+    focus: typeof giorno.focus === 'object' ? giorno.focus[lingua] : giorno.focus,
+    esercizi: giorno.esercizi.map((es) => risolviEsercizio(es, lingua)),
+  }
 }
 
 
@@ -40,7 +61,7 @@ function migraVecchiDati() {
   }
 }
 
-export function useSchedeData() {
+export function useSchedeData(lingua = 'en') {
   // Legge, migra e inizializza lo stato in un'unica passata — prima del primo render.
   // Scrivere direttamente in localStorage durante il render (fuori dall'initializer)
   // non aggiorna il React state, causando regressioni ai dati pre-migrazione ad ogni re-render.
@@ -103,7 +124,7 @@ export function useSchedeData() {
   function creaScheda(nome) {
     const nuova = {
       id: generaId(),
-      nome: nome || 'Nuova scheda',
+      nome: nome || (lingua === 'it' ? 'Nuova scheda' : 'New routine'),
       sessioni: [],
     }
     setSchede((prev) => [...(prev || schedeEffettive), nuova])
@@ -113,8 +134,12 @@ export function useSchedeData() {
   function creaSchedaStandard(nome) {
     const nuova = {
       id: generaId(),
-      nome: nome || 'La mia scheda',
-      sessioni: [GIORNI_DEFAULT.A, GIORNI_DEFAULT.B, GIORNI_DEFAULT.C],
+      nome: nome || (lingua === 'it' ? 'La mia scheda' : 'My routine'),
+      sessioni: [
+        risolviSessione(GIORNI_DEFAULT.A, lingua),
+        risolviSessione(GIORNI_DEFAULT.B, lingua),
+        risolviSessione(GIORNI_DEFAULT.C, lingua),
+      ],
     }
     setSchede((prev) => [...(prev || schedeEffettive), nuova])
     return nuova
@@ -347,7 +372,11 @@ export function useSchedeData() {
         if (s.id !== schedaAttiva.id) return s
         return {
           ...s,
-          sessioni: [GIORNI_DEFAULT.A, GIORNI_DEFAULT.B, GIORNI_DEFAULT.C],
+          sessioni: [
+            risolviSessione(GIORNI_DEFAULT.A, lingua),
+            risolviSessione(GIORNI_DEFAULT.B, lingua),
+            risolviSessione(GIORNI_DEFAULT.C, lingua),
+          ],
         }
       })
     )

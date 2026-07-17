@@ -4,7 +4,7 @@ import ExerciseCard from './ExerciseCard'
 import { useApp } from '../context/AppContext'
 
 export default function SessionePassataModal({ sessione, onClose, onElimina }) {
-  const { workoutData, modificaSessionePassata } = useApp()
+  const { t, workoutData, modificaSessionePassata } = useApp()
 
   // Copia locale modificabile dei dati registrati
   const [exercisesEdit, setExercisesEdit] = useState(() =>
@@ -18,7 +18,7 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
 
   // Data leggibile — evita sfasamenti UTC
   const [anno, mese, giornoDt] = sessione.date.split('-').map(Number)
-  const dataStr = new Date(anno, mese - 1, giornoDt).toLocaleDateString('it-IT', {
+  const dataStr = new Date(anno, mese - 1, giornoDt).toLocaleDateString(t.sessionePassataModal.localeData, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -62,10 +62,10 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
                 <p className="text-sm text-gray-400 mt-0.5">
                   {giorno.emoji} {giorno.nome}
                   <span className="mx-1.5 text-gray-600">·</span>
-                  {serieCompletate}/{totSerie} serie
+                  {serieCompletate}/{totSerie} {t.sessionePassataModal.serie}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500 mt-0.5">Sessione non più nella scheda</p>
+                <p className="text-sm text-gray-500 mt-0.5">{t.sessionePassataModal.nonPiuNellaScheda}</p>
               )}
             </div>
             <button
@@ -91,7 +91,7 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
             ))
           ) : (
             <p className="text-sm text-gray-500 text-center py-10">
-              Gli esercizi di questa sessione non sono più disponibili nella scheda attiva.
+              {t.sessionePassataModal.eserciziNonDisponibili}
             </p>
           )}
         </div>
@@ -110,7 +110,7 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
             }`}
           >
             <Save size={16} />
-            {salvato ? 'Salvato' : 'Salva modifiche'}
+            {salvato ? t.sessionePassataModal.salvato : t.sessionePassataModal.salvaModifiche}
           </button>
 
           {onElimina && (
@@ -127,7 +127,7 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
               }`}
             >
               <Trash2 size={14} />
-              {confermaElimina ? 'Conferma eliminazione' : 'Elimina allenamento'}
+              {confermaElimina ? t.sessionePassataModal.confermaEliminazione : t.sessionePassataModal.eliminaAllenamento}
             </button>
           )}
         </div>

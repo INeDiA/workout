@@ -32,7 +32,7 @@ const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
 export default function Storico() {
   const {
-    sessioniCompletate, streak, workoutData, schede, schedaAttiva,
+    t, sessioniCompletate, streak, workoutData, schede, schedaAttiva,
     activeSession, aggiungiSessionePassata, eliminaSessionePassata,
   } = useApp()
 
@@ -95,8 +95,8 @@ export default function Storico() {
   return (
     <div className="min-h-screen bg-gray-950 pb-24">
       <div className="pt-safe px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold text-white">Storico</h1>
-        <p className="text-sm text-gray-400 mt-1">Progressi e calendario allenamenti</p>
+        <h1 className="text-2xl font-bold text-white">{t.storico.titolo}</h1>
+        <p className="text-sm text-gray-400 mt-1">{t.storico.sottotitolo}</p>
       </div>
 
       <div className="px-4 space-y-4">
@@ -107,27 +107,27 @@ export default function Storico() {
               <Flame size={15} className="text-orange-400" />
               <span className="text-xl font-bold text-white">{streak}</span>
             </div>
-            <p className="text-xs text-gray-500">Streak</p>
+            <p className="text-xs text-gray-500">{t.storico.streak}</p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Calendar size={15} className="text-blue-400" />
               <span className="text-xl font-bold text-white">{sessioniCompletate.length}</span>
             </div>
-            <p className="text-xs text-gray-500">Totale</p>
+            <p className="text-xs text-gray-500">{t.storico.totale}</p>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <TrendingUp size={15} className="text-green-400" />
               <span className="text-xl font-bold text-white">{freqSettimana}</span>
             </div>
-            <p className="text-xs text-gray-500">× settimana</p>
+            <p className="text-xs text-gray-500">{t.storico.perSettimana}</p>
           </div>
         </div>
 
         {/* Tab switcher */}
         <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
-          {[['calendario', 'Calendario'], ['progressione', 'Progressione']].map(([key, label]) => (
+          {[['calendario', t.storico.calendario], ['progressione', t.storico.progressione]].map(([key, label]) => (
             <button key={key} onClick={() => setActiveTab(key)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === key ? 'bg-gray-700 text-white' : 'text-gray-400'
@@ -175,7 +175,7 @@ export default function Storico() {
           <div className="space-y-6">
             {mesiDaMostrare.map(({ anno, mese }) => {
               const nomeMese = new Date(anno, mese, 1)
-                .toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
+                .toLocaleDateString(t.storico.localeData, { month: 'long', year: 'numeric' })
               const celle = getCelleDelMese(anno, mese)
 
               return (
@@ -258,7 +258,7 @@ export default function Storico() {
         {/* Grafici progressione pesi */}
         {activeTab === 'progressione' && schedaAttiva?.sessioni?.length > 0 && (
           <div>
-            <h2 className="text-sm font-semibold text-white mb-2">Progressione pesi</h2>
+            <h2 className="text-sm font-semibold text-white mb-2">{t.storico.progressionePesi}</h2>
             <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1 overflow-x-auto no-scrollbar mb-3">
               {schedaAttiva.sessioni.map((sess) => (
                 <button
@@ -310,7 +310,7 @@ export default function Storico() {
         >
           <div className="w-full bg-gray-900 border-t border-gray-800 rounded-t-3xl p-5 pb-10">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-bold text-white">Aggiungi allenamento</h2>
+              <h2 className="text-base font-bold text-white">{t.storico.aggiungiAllenamento}</h2>
               <button
                 onClick={() => setGiornoAggiunta(null)}
                 className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800 transition-colors"
@@ -321,12 +321,12 @@ export default function Storico() {
             <p className="text-sm text-gray-400 mb-4 capitalize">
               {(() => {
                 const [a, m, g] = giornoAggiunta.data.split('-').map(Number)
-                return new Date(a, m - 1, g).toLocaleDateString('it-IT', {
+                return new Date(a, m - 1, g).toLocaleDateString(t.storico.localeData, {
                   weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
                 })
               })()}
             </p>
-            <p className="text-xs text-gray-500 mb-3">Quale sessione hai svolto?</p>
+            <p className="text-xs text-gray-500 mb-3">{t.storico.qualeSessione}</p>
             <div className={`grid gap-2 ${
               (schedaAttiva?.sessioni?.length || 0) <= 3 ? 'grid-cols-3' : 'grid-cols-2'
             }`}>

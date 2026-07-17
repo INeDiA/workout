@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Play, Pause, RotateCcw, Settings } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 
 const DURATE_PREDEFINITE = [60, 90, 120, 150, 180]
 
 export default function Timer({ timer }) {
+  const { t } = useApp()
   const { remaining, running, duration, start, pause, reset, changeDuration } = timer
   const [showOptions, setShowOptions] = useState(false)
 
@@ -49,19 +51,19 @@ export default function Timer({ timer }) {
 
         {/* Controlli */}
         <div className="flex-1">
-          <p className="text-xs text-gray-400 mb-2">Recupero: {duration}s</p>
+          <p className="text-xs text-gray-400 mb-2">{t.timer.recupero}: {duration}s</p>
           <div className="flex gap-2">
             <button
               onClick={running ? pause : start}
               className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl py-2 px-3 text-sm font-medium transition-all"
             >
               {running ? <Pause size={15} /> : <Play size={15} />}
-              {running ? 'Pausa' : 'Start'}
+              {running ? t.timer.pausa : t.timer.start}
             </button>
             <button
               onClick={reset}
               className="p-2.5 bg-gray-800 hover:bg-gray-700 active:scale-95 rounded-xl transition-all"
-              title="Reset"
+              title={t.timer.reset}
             >
               <RotateCcw size={15} className="text-gray-400" />
             </button>
@@ -70,7 +72,7 @@ export default function Timer({ timer }) {
               className={`p-2.5 rounded-xl transition-all active:scale-95 ${
                 showOptions ? 'bg-blue-900 text-blue-300' : 'bg-gray-800 hover:bg-gray-700 text-gray-400'
               }`}
-              title="Durata"
+              title={t.timer.durata}
             >
               <Settings size={15} />
             </button>
