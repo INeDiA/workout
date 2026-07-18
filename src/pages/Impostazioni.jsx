@@ -389,6 +389,7 @@ export default function Impostazioni() {
                     className="flex items-center justify-center gap-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl py-2.5 text-xs font-medium text-white transition-colors active:scale-98">
                     <Globe size={13} />{t.impostazioni.webdav}
                   </button>
+                  <p className="col-span-2 text-xs text-gray-500 -mt-1 mb-1">{t.impostazioni.webdavDesc}</p>
                 </>
               )}
               <button onClick={esportaDati}

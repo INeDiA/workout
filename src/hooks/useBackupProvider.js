@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { webdavProvider } from '../utils/webdav'
 import { serializeBackup } from '../utils/backupData'
-import { rinnovaESalvaTokenGdrive } from '../utils/googleAuth'
+import { rinnovaTokenGdrive } from '../utils/googleAuth'
 
 const STORAGE_KEY = 'sm_backup_provider'
 const GDRIVE_REDIRECT_URI = () => window.location.origin + import.meta.env.BASE_URL
@@ -41,6 +41,20 @@ function saveConfig(config) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
 }
 
+// Carica un backup usando esplicitamente la config passata (non lo stato del hook) —
+// serve per il primo backup subito dopo il collegamento, quando lo stato React
+// potrebbe non essere ancora aggiornato in modo sincrono.
+async function caricaBackupConConfig(config) {
+  const json = serializeBackup()
+  if (config.type === 'gdrive') {
+    const { uploadBackup: driveUpload } = await import('../utils/googleDrive')
+    await driveUpload(config.access_token)
+  } else if (config.type === 'webdav') {
+    await webdavProvider.upload(config, json)
+    localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
+  }
+}
+
 // ── Hook ────────────────────────────────────────────────────────────────────
 
 export function useBackupProvider() {
@@ -50,43 +64,48 @@ export function useBackupProvider() {
     providerConfigRef.current = providerConfig
   }, [providerConfig])
 
-  // Gestisce il ritorno dal redirect OAuth Google
+  // Gestisce il ritorno dal redirect OAuth Google (authorization code flow):
+  // scambia il code con access_token + refresh_token tramite il Worker, poi
+  // esegue subito un primo backup.
   useEffect(() => {
-    const hash = window.location.hash
-    if (!hash.includes('access_token=')) return
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    window.history.replaceState(null, '', window.location.pathname)
+    if (!code) return
 
-    const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash)
-    const access_token = params.get('access_token')
-    const expires_in = parseInt(params.get('expires_in') || '3600', 10)
-
-    window.history.replaceState(null, '', window.location.pathname + window.location.search)
-    if (!access_token) return
-
-    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-      headers: { Authorization: `Bearer ${access_token}` },
+    const workerUrl = import.meta.env.VITE_BACKUP_WORKER_URL
+    fetch(`${workerUrl}/exchange`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, redirect_uri: GDRIVE_REDIRECT_URI() }),
     })
       .then((r) => r.json())
-      .then((info) => {
+      .then(async ({ access_token, refresh_token, expires_in }) => {
+        const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }).then((r) => r.json())
         const config = {
           type: 'gdrive',
           access_token,
+          refresh_token,
           expires_at: Date.now() + expires_in * 1000,
           email: info.email ?? '',
         }
         saveConfig(config)
         setProviderConfig(config)
+        caricaBackupConConfig(config).catch(() => {})
       })
       .catch(() => {})
   }, [])
 
-  // Prova il rinnovo silenzioso del token gdrive; aggiorna state+localStorage se riesce.
+  // Prova il rinnovo del token gdrive tramite il Worker; aggiorna state+localStorage se riesce.
   // Restituisce la config aggiornata (o quella corrente se non serve/non riesce rinnovare).
   async function assicuraTokenValido() {
     const config = providerConfigRef.current
     if (!config || config.type !== 'gdrive') return config
     if (Date.now() < (config.expires_at ?? 0) - 30_000) return config
 
-    const rinnovata = await rinnovaESalvaTokenGdrive()
+    const rinnovata = await rinnovaTokenGdrive(config)
     if (rinnovata) {
       setProviderConfig(rinnovata)
       return rinnovata
@@ -101,7 +120,7 @@ export function useBackupProvider() {
       const config = providerConfigRef.current
       if (!config || config.type !== 'gdrive') return
       if (Date.now() < (config.expires_at ?? 0) - SOGLIA_RINNOVO_MS) return
-      rinnovaESalvaTokenGdrive().then((rinnovata) => {
+      rinnovaTokenGdrive(config).then((rinnovata) => {
         if (rinnovata) setProviderConfig(rinnovata)
       })
     }
@@ -121,25 +140,28 @@ export function useBackupProvider() {
       (providerConfig.type === 'gdrive' &&
         Date.now() < (providerConfig.expires_at ?? 0) - 30_000))
 
-  // ── Connessione Google Drive (redirect OAuth) ───────────────────────────
+  // ── Connessione Google Drive (redirect OAuth, authorization code) ──────
   function connectGdrive() {
     const params = new URLSearchParams({
       client_id: GDRIVE_CLIENT_ID,
       redirect_uri: GDRIVE_REDIRECT_URI(),
-      response_type: 'token',
+      response_type: 'code',
       scope: GDRIVE_SCOPE,
+      access_type: 'offline',
+      prompt: 'consent',
       include_granted_scopes: 'true',
     })
     window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`
   }
 
-  // ── Connessione WebDAV (testa prima di salvare) ─────────────────────────
+  // ── Connessione WebDAV (testa prima di salvare, poi backup immediato) ──
   async function connectWebdav(config) {
     const result = await webdavProvider.test(config)
     if (!result.ok) throw new Error(result.error)
     const full = { type: 'webdav', ...config }
     saveConfig(full)
     setProviderConfig(full)
+    caricaBackupConConfig(full).catch(() => {})
   }
 
   // ── Disconnessione ──────────────────────────────────────────────────────
@@ -158,14 +180,7 @@ export function useBackupProvider() {
         throw new Error('Token Google scaduto. Riconnetti il tuo account.')
       }
     }
-    const json = serializeBackup()
-    if (config.type === 'gdrive') {
-      const { uploadBackup: driveUpload } = await import('../utils/googleDrive')
-      await driveUpload(config.access_token)
-    } else if (config.type === 'webdav') {
-      await webdavProvider.upload(config, json)
-      localStorage.setItem('sm_ultimo_backup', new Date().toISOString())
-    }
+    await caricaBackupConConfig(config)
   }
 
   // ── Download backup (delega al provider attivo) ─────────────────────────

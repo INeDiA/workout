@@ -1,5 +1,5 @@
 import { serializeBackup, BACKUP_FILE_NAME } from './backupData'
-import { rinnovaESalvaTokenGdrive } from './googleAuth'
+import { rinnovaTokenGdrive } from './googleAuth'
 
 const DRIVE_FILES = 'https://www.googleapis.com/drive/v3/files'
 const DRIVE_UPLOAD = 'https://www.googleapis.com/upload/drive/v3/files'
@@ -68,8 +68,8 @@ export async function autoBackup() {
     if (config.type === 'gdrive') {
       let tokenValido = config.access_token
       if (Date.now() >= (config.expires_at ?? 0) - 30_000) {
-        const rinnovata = await rinnovaESalvaTokenGdrive()
-        if (!rinnovata) return // rinnovo silenzioso non riuscito, rinuncia
+        const rinnovata = await rinnovaTokenGdrive(config)
+        if (!rinnovata) return // rinnovo non riuscito (refresh_token revocato), rinuncia
         tokenValido = rinnovata.access_token
       }
       await uploadBackup(tokenValido)

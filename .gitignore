@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Cloudflare Worker (wrangler dev cache/state locale)
+worker/.wrangler
+
 # Claude Code config
 .claude/
 

@@ -229,6 +229,7 @@ export const it = {
     ripristina: 'Ripristina',
     googleDrive: 'Google Drive',
     webdav: 'WebDAV',
+    webdavDesc: 'Nessun login da rifare, una volta collegato resta attivo.',
     esporta: 'Esporta',
     importa: 'Importa',
     condividiBackupTitolo: 'Backup allenamento',

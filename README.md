@@ -39,8 +39,9 @@ PWA mobile-first per tracciare gli allenamenti in palestra. Registra serie e pes
 
 ### Backup e ripristino
 - **Locale** — esporta schede, storico e impostazioni in un file `.json` (su iOS/Android apre il foglio di condivisione nativo, su desktop scarica il file); importa un backup precedente in qualsiasi momento
-- **Google Drive** — collega il tuo account per backup/ripristino su Drive con un tap; il token di accesso si rinnova da solo in background (Google Identity Services) finché la sessione Google resta valida, senza dover riconnettersi ogni ora
-- **WebDAV** — alternativa self-hosted (Nextcloud e compatibili) per chi preferisce non usare Google
+- **Google Drive** — collega il tuo account per backup/ripristino su Drive con un tap; un piccolo Cloudflare Worker (`worker/`) tiene il refresh token OAuth al sicuro, così l'accesso resta attivo indefinitamente senza dover rifare il login periodicamente
+- **WebDAV** — alternativa self-hosted (Nextcloud e compatibili) per chi preferisce non usare Google; nessun login OAuth, resta collegato senza mai scadere
+- **Backup immediato al collegamento** — appena colleghi Google Drive o WebDAV parte subito un primo backup, oltre a quello automatico dopo ogni allenamento completato
 - **Notifica di backup mancante** — avviso in Impostazioni se non è mai stato fatto un backup o l'ultimo risale a più di 30 giorni fa
 
 ### Impostazioni
@@ -66,9 +67,9 @@ PWA mobile-first per tracciare gli allenamenti in palestra. Registra serie e pes
 | [vite-plugin-pwa](https://vite-pwa-org.netlify.app) | 1 | Service worker + Web App Manifest |
 | [Recharts](https://recharts.org) | 3 | Grafici progressione pesi |
 | [Lucide React](https://lucide.dev) | — | Icone |
-| [Google Identity Services](https://developers.google.com/identity/gsi/web) | — | Rinnovo silenzioso del token OAuth per il backup su Drive |
+| [Cloudflare Workers](https://workers.cloudflare.com) | — | Scambio/rinnovo del refresh token OAuth Google (`worker/`), l'unico componente server-side del progetto |
 
-Tutti i dati sono salvati in `localStorage` tramite un hook personalizzato. **Nessun backend proprio**: il backup cloud parla direttamente con Google Drive o con un server WebDAV a scelta dell'utente.
+Tutti i dati sono salvati in `localStorage` tramite un hook personalizzato. Il frontend resta statico (GitHub Pages): l'unico componente server-side è il Worker Cloudflare che tiene il `client_secret` di Google per il refresh token — il backup su WebDAV parla invece direttamente con il server scelto dall'utente, senza intermediari.
 
 ---
 
@@ -95,7 +96,7 @@ src/
 │   ├── backup.js                 # helper per la notifica di backup mancante
 │   ├── backupData.js             # serializzazione/deserializzazione backup .json
 │   ├── googleDrive.js            # upload/download su Google Drive + backup automatico
-│   ├── googleAuth.js             # rinnovo silenzioso del token Google (GIS)
+│   ├── googleAuth.js             # rinnovo del token Google via Cloudflare Worker
 │   └── webdav.js                 # provider di backup WebDAV
 ├── pages/
 │   ├── Onboarding.jsx            # scelta scheda standard / da zero al primo avvio
@@ -114,6 +115,10 @@ src/
     ├── InstallBanner.jsx         # banner "Aggiungi alla Home Screen"
     ├── Timer.jsx / TimerPill.jsx # timer recupero (esteso e compatto)
     └── ProgressChart.jsx         # grafico Recharts per singolo esercizio
+
+worker/                          # Cloudflare Worker: scambia/rinnova il refresh token
+├── wrangler.toml                # config del Worker
+└── src/index.js                 # endpoint /exchange e /refresh, tiene il client_secret Google
 ```
 
 ---
@@ -128,4 +133,6 @@ npm run build    # build di produzione in dist/
 
 ## Deploy
 
-Configurato per **GitHub Pages** con deploy automatico via GitHub Actions a ogni push su `main`. Il base URL è `/scheda-allenamento/`.
+Due workflow GitHub Actions separati, entrambi automatici ad ogni push su `main`:
+- **Frontend** (`deploy.yml`) — build e pubblicazione su **GitHub Pages**. Base URL `/workout/`.
+- **Worker** (`deploy-worker.yml`) — pubblica su Cloudflare Workers solo quando cambia qualcosa sotto `worker/`. Richiede i secret GitHub `CLOUDFLARE_API_TOKEN` e `GOOGLE_CLIENT_SECRET` (mai esposto al frontend, resta solo lato Worker).
