@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Pencil, Trash2, Copy, Check, Plus } from 'lucide-react'
+import { X, Pencil, Trash2, Copy, Check } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 
 export default function SchedeSheet({ onClose }) {
@@ -177,17 +177,17 @@ export default function SchedeSheet({ onClose }) {
         <div className="pt-4 flex-shrink-0 grid grid-cols-2 gap-2">
           <button
             onClick={handleCrea}
-            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
+            className="w-full text-left border-2 border-dashed border-gray-700 hover:border-blue-600 rounded-2xl px-3 py-3 transition-colors active:scale-98"
           >
-            <Plus size={16} />
-            {t.schedeSheet.nuovaScheda}
+            <p className="text-sm font-semibold text-gray-300">{t.schedeSheet.nuovaScheda}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{t.schedeSheet.nuovaSchedaDesc}</p>
           </button>
           <button
             onClick={handleCreaStandard}
-            className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-700 hover:border-blue-600 text-gray-400 hover:text-blue-400 rounded-2xl py-3.5 text-sm font-medium transition-colors active:scale-98"
+            className="w-full text-left border-2 border-dashed border-gray-700 hover:border-blue-600 rounded-2xl px-3 py-3 transition-colors active:scale-98"
           >
-            <Plus size={16} />
-            {t.schedeSheet.schedaStandard}
+            <p className="text-sm font-semibold text-gray-300">{t.schedeSheet.schedaStandard}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-snug">{t.schedeSheet.schedaStandardDesc}</p>
           </button>
         </div>
       </div>

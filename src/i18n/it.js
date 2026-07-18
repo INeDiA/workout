@@ -148,7 +148,9 @@ export const it = {
     toccaAncoraConferma: 'Tocca ancora per confermare',
     eliminaScheda: 'Elimina scheda',
     nuovaScheda: 'Nuova scheda',
+    nuovaSchedaDesc: 'Vuota, la personalizzi tu da zero.',
     schedaStandard: 'Scheda standard',
+    schedaStandardDesc: 'Push · Pull · Legs, esercizi già inclusi.',
   },
 
   sessioniManagerSheet: {

@@ -148,7 +148,9 @@ export const en = {
     toccaAncoraConferma: 'Tap again to confirm',
     eliminaScheda: 'Delete routine',
     nuovaScheda: 'New routine',
+    nuovaSchedaDesc: 'Empty — build it yourself from scratch.',
     schedaStandard: 'Standard routine',
+    schedaStandardDesc: 'Push · Pull · Legs, exercises already included.',
   },
 
   sessioniManagerSheet: {
