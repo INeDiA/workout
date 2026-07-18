@@ -107,6 +107,8 @@ export const en = {
     pill: '(pill)',
     placeholderNome: 'e.g. Push',
     colore: 'Color',
+    eserciziIniziali: 'Starting exercises',
+    nessuno: 'None',
     salvaModifiche: 'Save changes',
     creaSessione: 'Create session',
   },
@@ -200,9 +202,6 @@ export const en = {
     gestisciSchede: 'Manage routines',
     sessioni: 'Sessions',
     sessioniDesc: '{n} sessions · rename, reorder, delete',
-    ripristinaDefaultWarning: 'All sessions and custom exercises in this routine will be replaced with the default ones.',
-    confermaRipristino: 'Confirm reset',
-    ripristinaDefault: 'Reset to default exercises',
 
     allenamento: 'Workout',
     giorniAllenamento: 'Training days',

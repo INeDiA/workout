@@ -1,21 +1,32 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
-import { COLORI_LISTA, COLORI_SESSIONE } from '../data/workout'
+import { COLORI_LISTA, COLORI_SESSIONE, GIORNI_DEFAULT } from '../data/workout'
 import { useApp } from '../context/AppContext'
 
 export default function SessionEditModal({ sessione, onSave, onClose }) {
-  const { t } = useApp()
+  const { t, lingua } = useApp()
   // Il modal viene montato ex-novo ad ogni apertura, quindi bastano
   // inizializzatori lazy per precompilare i campi da `sessione`
   const [nome, setNome] = useState(() => sessione?.nome || '')
   const [focus, setFocus] = useState(() => sessione?.focus || sessione?.nome || '')
   const [emoji, setEmoji] = useState(() => sessione?.emoji || '💪')
   const [colore, setColore] = useState(() => sessione?.colore || 'blue')
+  // Solo in creazione: template di partenza (esercizi + campi precompilati, sempre modificabili)
+  const [templateId, setTemplateId] = useState(null)
+
+  function selezionaTemplate(id) {
+    setTemplateId(id)
+    const giorno = id ? GIORNI_DEFAULT[id] : null
+    setNome(giorno?.nome || '')
+    setFocus(giorno ? (giorno.focus[lingua] ?? giorno.focus.it) : '')
+    setEmoji(giorno?.emoji || '💪')
+    setColore(giorno?.colore || 'blue')
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!nome.trim()) return
-    onSave({ nome: nome.trim(), focus: focus.trim() || nome.trim(), emoji, colore })
+    onSave({ nome: nome.trim(), focus: focus.trim() || nome.trim(), emoji, colore, templateId })
   }
 
   return (
@@ -38,6 +49,45 @@ export default function SessionEditModal({ sessione, onSave, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Template di partenza (solo in creazione) */}
+          {!sessione && (
+            <div>
+              <label className="text-xs text-gray-400 mb-2 block font-medium">
+                {t.sessionEditModal.eserciziIniziali}
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => selezionaTemplate(null)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${
+                    templateId === null
+                      ? 'bg-blue-600 border-blue-500 text-white'
+                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  {t.sessionEditModal.nessuno}
+                </button>
+                {['A', 'B', 'C'].map((id) => {
+                  const giorno = GIORNI_DEFAULT[id]
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => selezionaTemplate(id)}
+                      className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${
+                        templateId === id
+                          ? 'bg-blue-600 border-blue-500 text-white'
+                          : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                      }`}
+                    >
+                      {giorno.emoji} {giorno.nome}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Focus / titolo */}
           <div>
             <label className="text-xs text-gray-400 mb-1.5 block font-medium">

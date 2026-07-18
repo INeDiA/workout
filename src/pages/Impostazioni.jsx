@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ChevronRight, AlertTriangle, Upload, Share2, CloudUpload, CloudDownload, Unlink, Globe, Download, RotateCcw } from 'lucide-react'
+import { ChevronRight, AlertTriangle, Upload, Share2, CloudUpload, CloudDownload, Unlink, Globe, Download } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { backupNecessario } from '../utils/backup'
 import { useBackupProvider } from '../hooks/useBackupProvider'
@@ -11,10 +11,9 @@ import SessioniManagerSheet from '../components/SessioniManagerSheet'
 const DURATE_TIMER = [60, 90, 120, 150, 180]
 
 export default function Impostazioni() {
-  const { t, lingua, schedaAttiva, settings, setSettings, resetSchedaDefault } = useApp()
+  const { t, lingua, schedaAttiva, settings, setSettings } = useApp()
   const [showSchedeSheet, setShowSchedeSheet] = useState(false)
   const [showSessioniManager, setShowSessioniManager] = useState(false)
-  const [passoResetScheda, setPassoResetScheda] = useState(0)
   const [passoReset, setPassoReset] = useState(0)
   const [erroreImport, setErroreImport] = useState(null)
   const inputFileRef = useRef(null)
@@ -149,13 +148,7 @@ export default function Impostazioni() {
     e.target.value = ''
   }
 
-  // ── Reset scheda / reset totale ─────────────────────────────────────
-  function handleResetScheda() {
-    if (passoResetScheda < 1) { setPassoResetScheda(1); return }
-    resetSchedaDefault()
-    setPassoResetScheda(0)
-  }
-
+  // ── Reset totale ─────────────────────────────────────
   function handleReset() {
     if (passoReset < 2) { setPassoReset((p) => p + 1); return }
     localStorage.clear()
@@ -231,26 +224,6 @@ export default function Impostazioni() {
               <p className="text-xs text-gray-400 mt-0.5">{t.impostazioni.sessioniDesc.replace('{n}', schedaAttiva?.sessioni?.length || 0)}</p>
             </div>
             <ChevronRight size={18} className="text-gray-500" />
-          </button>
-
-          {passoResetScheda > 0 && (
-            <div className="flex items-start gap-2 bg-amber-950 border border-amber-800 rounded-xl p-3 mb-2">
-              <AlertTriangle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300 leading-relaxed">
-                {t.impostazioni.ripristinaDefaultWarning}
-              </p>
-            </div>
-          )}
-          <button
-            onClick={handleResetScheda}
-            className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium border transition-colors active:scale-98 ${
-              passoResetScheda > 0
-                ? 'bg-amber-900 border-amber-700 text-amber-200'
-                : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            <RotateCcw size={13} />
-            {passoResetScheda > 0 ? t.impostazioni.confermaRipristino : t.impostazioni.ripristinaDefault}
           </button>
         </div>
 

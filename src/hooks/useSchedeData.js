@@ -190,14 +190,18 @@ export function useSchedeData(lingua = 'en') {
 
   // ── Sessioni ─────────────────────────────────────────────────────────────────
 
-  function aggiungiSessione(schedaId, { nome, emoji, colore }) {
+  function aggiungiSessione(schedaId, { nome, focus, emoji, colore, templateId }) {
+    const esercizi = templateId
+      ? risolviSessione(GIORNI_DEFAULT[templateId], lingua).esercizi.map((es) => ({ ...es, id: generaId() }))
+      : []
+
     const nuovaSessione = {
       id: generaId(),
       nome: nome || 'Nuova sessione',
-      focus: nome || 'Nuova sessione',
+      focus: focus || nome || 'Nuova sessione',
       emoji: emoji || '💪',
       colore: colore || 'blue',
-      esercizi: [],
+      esercizi,
     }
     setSchede((prev) =>
       (prev || schedeEffettive).map((s) =>
@@ -372,22 +376,6 @@ export function useSchedeData(lingua = 'en') {
     )
   }
 
-  function resetSchedaDefault() {
-    setSchede((prev) =>
-      (prev || schedeEffettive).map((s) => {
-        if (s.id !== schedaAttiva.id) return s
-        return {
-          ...s,
-          sessioni: [
-            risolviSessione(GIORNI_DEFAULT.A, lingua),
-            risolviSessione(GIORNI_DEFAULT.B, lingua),
-            risolviSessione(GIORNI_DEFAULT.C, lingua),
-          ],
-        }
-      })
-    )
-  }
-
   return {
     schede: schede || schedeEffettive,
     schedaAttiva,
@@ -407,6 +395,5 @@ export function useSchedeData(lingua = 'en') {
     rimuoviEsercizio,
     riordinaEsercizi,
     riordinaSessioni,
-    resetSchedaDefault,
   }
 }

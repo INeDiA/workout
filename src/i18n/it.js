@@ -107,6 +107,8 @@ export const it = {
     pill: '(pill)',
     placeholderNome: 'es. Push',
     colore: 'Colore',
+    eserciziIniziali: 'Esercizi iniziali',
+    nessuno: 'Nessuno',
     salvaModifiche: 'Salva modifiche',
     creaSessione: 'Crea sessione',
   },
@@ -200,9 +202,6 @@ export const it = {
     gestisciSchede: 'Gestisci schede',
     sessioni: 'Sessioni',
     sessioniDesc: '{n} sessioni · rinomina, riordina, elimina',
-    ripristinaDefaultWarning: 'Tutte le sessioni ed esercizi personalizzati di questa scheda verranno sostituiti con quelli di default.',
-    confermaRipristino: 'Conferma ripristino',
-    ripristinaDefault: 'Ripristina esercizi di default',
 
     allenamento: 'Allenamento',
     giorniAllenamento: 'Giorni di allenamento',

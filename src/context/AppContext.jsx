@@ -73,7 +73,6 @@ export function AppProvider({ children }) {
     rimuoviEsercizio,
     riordinaEsercizi,
     riordinaSessioni,
-    resetSchedaDefault,
   } = schedeData
 
   const oggi = dataOggi()
@@ -257,7 +256,6 @@ export function AppProvider({ children }) {
         rimuoviEsercizio,
         riordinaEsercizi,
         riordinaSessioni,
-        resetSchedaDefault,
         // Timer
         timer,
         // Sessione workout
