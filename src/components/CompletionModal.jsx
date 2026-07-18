@@ -27,7 +27,6 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
     let serieTotali = 0
 
     for (const es of esercizi) {
-      if (es.isBodyweight) continue
       const sets = sessione.exercises[es.id]?.sets || []
       serieTotali += es.serie
       for (const s of sets) {
