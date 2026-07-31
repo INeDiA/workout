@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Play, CheckCircle, Award, AlertTriangle, Plus, Layers2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
@@ -10,6 +10,7 @@ import CompletionModal from '../components/CompletionModal'
 import { useWakeLock } from '../hooks/useWakeLock'
 import { useEserciziCustom } from '../components/ExercisePicker'
 import { COLORI_SESSIONE } from '../data/workout'
+import { trovaUltimiPesi } from '../utils/ultimiPesi'
 
 export default function Oggi() {
   const {
@@ -62,6 +63,13 @@ export default function Oggi() {
   const giornoEffettivo = giornoOverrideEffettivo ?? giornoOggi ?? ordineSessioni[0]
   const giorno = workoutData[giornoEffettivo]
   const colori = (giorno?.colore && COLORI_SESSIONE[giorno.colore]) || COLORI_SESSIONE.blue
+
+  // Anteprima del peso dell'ultima volta, mostrata come placeholder prima di iniziare
+  // l'allenamento (quando activeSession è null non c'è ancora nessun dato reale da mostrare)
+  const ultimiPesi = useMemo(
+    () => trovaUltimiPesi(giorno?.esercizi || [], sessioniCompletate),
+    [giorno, sessioniCompletate]
+  )
 
   useEffect(() => {
     if (!dragId) return
@@ -355,6 +363,7 @@ export default function Oggi() {
                 <ExerciseCard
                   esercizio={esercizio}
                   datiSerie={activeSession?.exercises[esercizio.id]?.sets || []}
+                  pesoUltimaVolta={!activeSession ? ultimiPesi[esercizio.id] : undefined}
                   onAggiornaSerie={
                     activeSession
                       ? (sets) => {

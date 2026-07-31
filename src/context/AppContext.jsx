@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useStorage'
 import { useSchedeData } from '../hooks/useSchedeData'
 import { useTimer } from '../hooks/useTimer'
 import { autoBackup } from '../utils/googleDrive'
+import { trovaUltimiPesi } from '../utils/ultimiPesi'
 import { LINGUE, rilevaLinguaDispositivo } from '../i18n'
 
 const AppContext = createContext(null)
@@ -132,19 +133,12 @@ export function AppProvider({ children }) {
   function iniziaSessione(dayId) {
     // Pre-popola i pesi con l'ultimo valore registrato per ogni esercizio
     const esercizi = workoutData[dayId]?.esercizi || []
-    const sessioni = [...sessioniCompletate].reverse() // più recenti prima
+    const ultimiPesi = trovaUltimiPesi(esercizi, sessioniCompletate)
     const exercises = {}
 
-    for (const esercizio of esercizi) {
-      if (esercizio.isBodyweight) continue
-      const ultima = sessioni.find(
-        (s) => s.exercises[esercizio.id]?.sets?.some((set) => set.weight)
-      )
-      if (ultima) {
-        const ultimiSet = ultima.exercises[esercizio.id].sets
-        exercises[esercizio.id] = {
-          sets: ultimiSet.map((set) => ({ weight: set.weight, done: false })),
-        }
+    for (const [esercizioId, ultimiSet] of Object.entries(ultimiPesi)) {
+      exercises[esercizioId] = {
+        sets: ultimiSet.map((set) => ({ weight: set.weight, done: false })),
       }
     }
 
