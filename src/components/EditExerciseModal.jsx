@@ -4,6 +4,8 @@ import { useApp } from '../context/AppContext'
 import { GRUPPI_MUSCOLARI } from '../data/exerciseDatabase'
 import { GRUPPO_LABELS } from '../data/workout'
 
+const DURATE_RECUPERO = [60, 90, 120, 150, 180]
+
 const FORM_VUOTO = {
   nome: '',
   gruppo: '',
@@ -14,6 +16,7 @@ const FORM_VUOTO = {
   isTime: false,
   isShared: false,
   isInverted: false,
+  recupero: null,
 }
 
 export default function EditExerciseModal({ esercizio, onSave, onClose }) {
@@ -32,6 +35,7 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
           isTime: esercizio.isTime || false,
           isShared: esercizio.isShared || false,
           isInverted: esercizio.isInverted || false,
+          recupero: esercizio.recupero ?? null,
         }
       : FORM_VUOTO
   )
@@ -165,6 +169,40 @@ export default function EditExerciseModal({ esercizio, onSave, onClose }) {
             >
               {t.editExerciseModal.assistenza}
             </button>
+          </div>
+
+          {/* Recupero personalizzato */}
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block font-medium">
+              {t.editExerciseModal.recupero}
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => set('recupero', null)}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${
+                  form.recupero === null
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                }`}
+              >
+                {t.editExerciseModal.recuperoDefault}
+              </button>
+              {DURATE_RECUPERO.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => set('recupero', d)}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${
+                    form.recupero === d
+                      ? 'bg-blue-600 border-blue-500 text-white'
+                      : 'bg-gray-800 border-gray-700 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  {d}s
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Toggle esercizio ricorrente */}

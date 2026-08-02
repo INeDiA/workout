@@ -57,10 +57,14 @@ export function useTimer(defaultDuration = 90) {
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [tick])
 
-  const start = useCallback(() => {
-    endTimeRef.current = Date.now() + duration * 1000
+  // overrideSecs: durata puntuale per questo avvio (es. recupero personalizzato di un
+  // esercizio) — se assente riusa la duration corrente, come sempre
+  const start = useCallback((overrideSecs) => {
+    const d = overrideSecs ?? duration
+    if (overrideSecs != null) setDuration(overrideSecs)
+    endTimeRef.current = Date.now() + d * 1000
     firedRef.current = false
-    setRemaining(duration)
+    setRemaining(d)
     setRunning(true)
   }, [duration])
 

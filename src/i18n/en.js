@@ -127,6 +127,8 @@ export const en = {
     pesoCorporeo: 'Bodyweight',
     aTempo: 'Timed',
     assistenza: 'Assisted',
+    recupero: 'Rest',
+    recuperoDefault: 'Default',
     comuneATutte: 'Shared across all sessions',
     noteTecniche: 'Technical notes',
     placeholderNote: 'Notes on proper form…',

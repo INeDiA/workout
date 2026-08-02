@@ -32,6 +32,7 @@ export default function Oggi() {
     sessioniCompletate,
     streak,
     timer,
+    settings,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
@@ -371,7 +372,7 @@ export default function Oggi() {
                           const nuovaSerieCompletata = sets.some(
                             (s, i) => s.done && !(prevSets[i]?.done)
                           )
-                          if (nuovaSerieCompletata) timer.start()
+                          if (nuovaSerieCompletata) timer.start(esercizio.recupero || settings.timerDuration)
                           aggiornaEsercizio(esercizio.id, { sets })
                         }
                       : undefined
