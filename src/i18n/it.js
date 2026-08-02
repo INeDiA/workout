@@ -52,6 +52,7 @@ export const it = {
     titolo: 'Storico',
     sottotitolo: 'Progressi e calendario allenamenti',
     streak: 'Streak',
+    record: 'Record: {n}',
     totale: 'Totale',
     perSettimana: '× settimana',
     calendario: 'Calendario',

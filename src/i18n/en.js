@@ -52,6 +52,7 @@ export const en = {
     titolo: 'History',
     sottotitolo: 'Progress and workout calendar',
     streak: 'Streak',
+    record: 'Record: {n}',
     totale: 'Total',
     perSettimana: '× week',
     calendario: 'Calendar',

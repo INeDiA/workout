@@ -130,6 +130,43 @@ export function AppProvider({ children }) {
     return count
   }, [sessioniCompletate, settings.giorniSettimana])
 
+  // Record di sempre: la striscia più lunga di settimane consecutive (storiche o
+  // in corso) che ha soddisfatto il target — non solo lo streak corrente
+  const streakRecord = useMemo(() => {
+    const conteggioPerSettimana = {}
+    for (const s of sessioniCompletate) {
+      const key = lunediDellaSettimana(s.date)
+      conteggioPerSettimana[key] = (conteggioPerSettimana[key] || 0) + 1
+    }
+    const settimane = Object.keys(conteggioPerSettimana)
+    if (settimane.length === 0) return streak
+
+    const target = settings.giorniSettimana ?? 3
+    const primaSettimana = new Date([...settimane].sort()[0])
+    const now = new Date()
+    const dayNow = now.getDay() || 7
+    const lunediCorrente = new Date(now)
+    lunediCorrente.setDate(now.getDate() - (dayNow - 1))
+
+    let migliore = 0
+    let corrente = 0
+    for (let d = new Date(primaSettimana); d < lunediCorrente; d.setDate(d.getDate() + 7)) {
+      const key = [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0'),
+      ].join('-')
+      const sessioni = conteggioPerSettimana[key] || 0
+      if (sessioni >= target) {
+        corrente++
+        migliore = Math.max(migliore, corrente)
+      } else {
+        corrente = 0
+      }
+    }
+    return Math.max(migliore, streak)
+  }, [sessioniCompletate, settings.giorniSettimana, streak])
+
   function iniziaSessione(dayId) {
     // Pre-popola i pesi con l'ultimo valore registrato per ogni esercizio
     const esercizi = workoutData[dayId]?.esercizi || []
@@ -228,6 +265,7 @@ export function AppProvider({ children }) {
         giornoOggi,
         ordineSessioni,
         streak,
+        streakRecord,
         oggi,
         // Schede
         schede,

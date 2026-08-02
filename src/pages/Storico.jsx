@@ -32,7 +32,7 @@ const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
 export default function Storico() {
   const {
-    t, sessioniCompletate, streak, workoutData, schede, schedaAttiva,
+    t, sessioniCompletate, streak, streakRecord, workoutData, schede, schedaAttiva,
     activeSession, aggiungiSessionePassata, eliminaSessionePassata,
   } = useApp()
 
@@ -75,12 +75,18 @@ export default function Storico() {
   // Legenda: sessioni della scheda attiva
   const sessioniLeggenda = schedaAttiva?.sessioni || []
 
-  // Frequenza settimanale (ultimi 30 giorni)
-  const sessioni30gg = sessioniCompletate.filter((s) => {
-    const diff = (new Date() - new Date(s.date)) / (1000 * 60 * 60 * 24)
-    return diff <= 30
-  }).length
-  const freqSettimana = sessioni30gg > 0 ? (sessioni30gg / 4.3).toFixed(1) : '—'
+  // Frequenza settimanale media da sempre (coerente con Streak e Totale, non più
+  // una finestra recente di 30 giorni)
+  const primaSessione = sessioniCompletate.reduce(
+    (min, s) => (min === null || s.date < min ? s.date : min),
+    null
+  )
+  const settimaneDaSempre = primaSessione
+    ? Math.max(1, (new Date() - new Date(primaSessione)) / (1000 * 60 * 60 * 24 * 7))
+    : 0
+  const freqSettimana = settimaneDaSempre > 0
+    ? (sessioniCompletate.length / settimaneDaSempre).toFixed(1)
+    : '—'
 
   // Se la sessione selezionata non esiste più, usa la prima disponibile
   const giornoGraficoEffettivo =
@@ -104,6 +110,11 @@ export default function Storico() {
               <span className="text-xl font-bold text-white">{streak}</span>
             </div>
             <p className="text-xs text-gray-500">{t.storico.streak}</p>
+            {streakRecord > 0 && (
+              <p className="text-[10px] text-gray-600 mt-0.5">
+                {t.storico.record.replace('{n}', streakRecord)}
+              </p>
+            )}
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
