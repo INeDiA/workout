@@ -39,6 +39,8 @@ export const en = {
     rotazioneAutomatica: 'Auto rotation:',
     tornaA: 'back to',
     iniziaAllenamento: 'Start Workout',
+    swipeHint: 'Swipe an exercise card left to edit, delete, or reorder it.',
+    swipeHintOk: 'Got it',
     comuniATutte: 'Shared across all sessions',
     aggiungiEsercizio: 'Add exercise',
     completatoParzialmente: 'You only completed {percentuale}% of the sets. Do you want to finish anyway?',

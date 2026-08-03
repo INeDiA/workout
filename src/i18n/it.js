@@ -39,6 +39,8 @@ export const it = {
     rotazioneAutomatica: 'Rotazione automatica:',
     tornaA: 'torna a',
     iniziaAllenamento: 'Inizia Allenamento',
+    swipeHint: 'Scorri una card esercizio verso sinistra per modificarla, eliminarla o riordinarla.',
+    swipeHintOk: 'Ho capito',
     comuniATutte: 'Comuni a tutte le sessioni',
     aggiungiEsercizio: 'Aggiungi esercizio',
     completatoParzialmente: 'Hai completato solo il {percentuale}% delle serie. Vuoi concludere comunque?',

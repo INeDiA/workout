@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Play, CheckCircle, Award, AlertTriangle, Plus, Layers2 } from 'lucide-react'
+import { Play, CheckCircle, Award, AlertTriangle, Plus, Layers2, ChevronsLeft } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ExerciseCard from '../components/ExerciseCard'
 import Timer from '../components/Timer'
@@ -39,6 +39,16 @@ export default function Oggi() {
   const [swipedId, setSwipedId] = useState(null)
   const [confermaIncompleto, setConfermaIncompleto] = useState(false)
   const [confermaAnnulla, setConfermaAnnulla] = useState(false)
+
+  // Avviso una tantum: lo swipe sulle card esercizio non è scoperto da solo
+  const [swipeHintVisto, setSwipeHintVisto] = useState(
+    () => localStorage.getItem('sm_swipe_hint_visto') === 'true'
+  )
+
+  function confermaSwipeHint() {
+    setSwipeHintVisto(true)
+    localStorage.setItem('sm_swipe_hint_visto', 'true')
+  }
 
   // Esercizio modal
   const [modalEsercizio, setModalEsercizio] = useState(null) // null=chiuso, undefined=nuovo, obj=modifica
@@ -335,6 +345,20 @@ export default function Oggi() {
             <Play size={20} fill="white" />
             {t.oggi.iniziaAllenamento}
           </button>
+        )}
+
+        {/* Avviso una tantum sullo swipe */}
+        {!activeSession && !swipeHintVisto && (
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-3">
+            <ChevronsLeft size={18} className="text-blue-400 flex-shrink-0" />
+            <p className="flex-1 text-sm text-gray-300 leading-relaxed">{t.oggi.swipeHint}</p>
+            <button
+              onClick={confermaSwipeHint}
+              className="flex-shrink-0 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all"
+            >
+              {t.oggi.swipeHintOk}
+            </button>
+          </div>
         )}
 
         {/* Lista esercizi */}
