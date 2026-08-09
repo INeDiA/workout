@@ -54,7 +54,7 @@ export default function Timer({ timer }) {
           <p className="text-xs text-gray-400 mb-2">{t.timer.recupero}: {duration}s</p>
           <div className="flex gap-2">
             <button
-              onClick={running ? pause : start}
+              onClick={running ? pause : () => start()}
               className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-xl py-2 px-3 text-sm font-medium transition-all"
             >
               {running ? <Pause size={15} /> : <Play size={15} />}
