@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Trophy, Clock, BarChart2, Flame } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { chiaveStorico } from '../utils/ultimiPesi'
 
 function formatDurata(ms) {
   const min = Math.round(ms / 60000)
@@ -10,8 +11,8 @@ function formatDurata(ms) {
   return m > 0 ? `${h}h ${m}min` : `${h}h`
 }
 
-export default function CompletionModal({ sessione, workoutData, sessioniCompletate, streak, onConferma }) {
-  const { t } = useApp()
+export default function CompletionModal({ sessione, workoutData, streak, onConferma }) {
+  const { t, storicoPesi } = useApp()
   const giorno = workoutData[sessione.dayId]
   const esercizi = giorno?.esercizi || []
 
@@ -44,12 +45,11 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
 
       const maxOggi = es.isInverted ? Math.min(...pesiFatti) : Math.max(...pesiFatti)
 
-      // Massimo storico (esclude la sessione corrente)
+      // Massimo storico (per catalogId/nome, indipendente da scheda/sessione/id)
       const agg = es.isInverted ? Math.min : Math.max
-      const storici = sessioniCompletate
-        .filter(s => s.exercises?.[es.id]?.sets?.length > 0)
-        .map(s => {
-          const pesi = s.exercises[es.id].sets.map(st => parseFloat(st.weight)).filter(p => !isNaN(p) && p > 0)
+      const storici = (storicoPesi[chiaveStorico(es)] || [])
+        .map(entry => {
+          const pesi = entry.sets.map(st => parseFloat(st.weight)).filter(p => !isNaN(p) && p > 0)
           return pesi.length > 0 ? agg(...pesi) : null
         })
         .filter(p => p !== null)
@@ -65,7 +65,7 @@ export default function CompletionModal({ sessione, workoutData, sessioniComplet
     const completamento = serieTotali > 0 ? Math.round((serieCompletate / serieTotali) * 100) : 0
 
     return { durata, serieCompletate, serieTotali, completamento, pr }
-  }, [sessione, esercizi, sessioniCompletate, ora])
+  }, [sessione, esercizi, storicoPesi, ora])
 
   return (
     <div className="fixed inset-0 z-[60] bg-black/70 flex items-end">

@@ -9,20 +9,19 @@ import {
 } from 'recharts'
 import { useApp } from '../context/AppContext'
 
-export default function ProgressChart({ esercizioId, nomeEsercizio, sessions, isInverted = false }) {
-  const { t } = useApp()
+export default function ProgressChart({ nomeEsercizio, chiaveStorico, isInverted = false }) {
+  const { t, storicoPesi } = useApp()
   // Estrai il peso rappresentativo per ogni sessione (ultimi 8 allenamenti con dati)
   // Per esercizi normali: massimo. Per esercizi ad assistenza (isInverted): minimo.
   const agg = isInverted ? Math.min : Math.max
-  const data = sessions
-    .filter((s) => s.completed && s.exercises?.[esercizioId]?.sets?.length > 0)
+  const data = (storicoPesi[chiaveStorico] || [])
     .slice(-8)
-    .map((s) => {
-      const pesi = (s.exercises[esercizioId].sets || [])
+    .map((entry) => {
+      const pesi = entry.sets
         .map((set) => parseFloat(set.weight))
         .filter((p) => !isNaN(p) && p > 0)
       return {
-        data: s.date.slice(5).replace('-', '/'), // MM/GG
+        data: entry.data.slice(5).replace('-', '/'), // MM/GG
         peso: pesi.length > 0 ? agg(...pesi) : null,
       }
     })

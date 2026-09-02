@@ -29,10 +29,10 @@ export default function Oggi() {
     riordinaEsercizi,
     aggiungiSessione,
     abbandonaSessione,
-    sessioniCompletate,
     streak,
     timer,
     settings,
+    storicoPesi,
   } = useApp()
 
   const [giornoOverride, setGiornoOverride] = useState(null)
@@ -78,8 +78,8 @@ export default function Oggi() {
   // Anteprima del peso dell'ultima volta, mostrata come placeholder prima di iniziare
   // l'allenamento (quando activeSession è null non c'è ancora nessun dato reale da mostrare)
   const ultimiPesi = useMemo(
-    () => trovaUltimiPesi(giorno?.esercizi || [], sessioniCompletate),
-    [giorno, sessioniCompletate]
+    () => trovaUltimiPesi(giorno?.esercizi || [], storicoPesi),
+    [giorno, storicoPesi]
   )
 
   useEffect(() => {
@@ -516,7 +516,6 @@ export default function Oggi() {
         <CompletionModal
           sessione={activeSession}
           workoutData={workoutData}
-          sessioniCompletate={sessioniCompletate}
           streak={streak}
           onConferma={handleConfermaCompletamento}
         />

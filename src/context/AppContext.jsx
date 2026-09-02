@@ -3,7 +3,7 @@ import { useLocalStorage } from '../hooks/useStorage'
 import { useSchedeData } from '../hooks/useSchedeData'
 import { useTimer } from '../hooks/useTimer'
 import { autoBackup } from '../utils/googleDrive'
-import { trovaUltimiPesi } from '../utils/ultimiPesi'
+import { trovaUltimiPesi, chiaveStorico } from '../utils/ultimiPesi'
 import { LINGUE, rilevaLinguaDispositivo } from '../i18n'
 
 const AppContext = createContext(null)
@@ -38,6 +38,9 @@ export function AppProvider({ children }) {
     giorniSettimana: 3,
     lingua: rilevaLinguaDispositivo(),
   })
+  // Storico pesi indicizzato per nome esercizio — indipendente da quale scheda/
+  // sessione/id lo ha generato, sopravvive alla cancellazione di una scheda
+  const [storicoPesi, setStoricoPesi] = useLocalStorage('sm_storico_pesi', {})
 
   // Utenti legacy: sm_settings già esisteva prima dell'introduzione di `lingua`.
   // Fallback al rilevamento dispositivo se il campo manca.
@@ -75,6 +78,49 @@ export function AppProvider({ children }) {
     riordinaEsercizi,
     riordinaSessioni,
   } = schedeData
+
+  // Migrazione una tantum: ricostruisce sm_storico_pesi dalle sessioni già
+  // completate, risolvendo id→nome nelle schede ancora esistenti (best-effort:
+  // una scheda già cancellata prima di questo aggiornamento non è recuperabile)
+  useEffect(() => {
+    if (localStorage.getItem('sm_storico_pesi_migrato')) return
+    localStorage.setItem('sm_storico_pesi_migrato', 'true')
+
+    try {
+      setStoricoPesi((prev) => {
+        const aggiornato = { ...prev }
+        for (const sess of sessions) {
+          try {
+            if (!sess.completed) continue
+            let esercizi = null
+            for (const s of (schede || [])) {
+              const trovata = s.sessioni?.find((x) => x.id === sess.dayId)
+              if (trovata) { esercizi = trovata.esercizi; break }
+            }
+            if (!esercizi) continue
+            for (const es of esercizi) {
+              if (es.isBodyweight) continue
+              const set = sess.exercises[es.id]?.sets
+              if (!set || !set.some((s) => s.weight)) continue
+              const chiave = chiaveStorico(es)
+              const esistenti = aggiornato[chiave] || []
+              if (esistenti.some((e) => e.data === sess.date)) continue
+              aggiornato[chiave] = [...esistenti, { data: sess.date, sets: set }]
+            }
+          } catch {
+            // Sessione con dati inattesi: la ignora senza compromettere il resto della migrazione
+          }
+        }
+        for (const chiave of Object.keys(aggiornato)) {
+          aggiornato[chiave] = [...aggiornato[chiave]].sort((a, b) => a.data.localeCompare(b.data))
+        }
+        return aggiornato
+      })
+    } catch {
+      // Migrazione fallita: nessun dato esistente viene toccato, si riparte da uno storico vuoto
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const oggi = dataOggi()
 
@@ -170,7 +216,7 @@ export function AppProvider({ children }) {
   function iniziaSessione(dayId) {
     // Pre-popola i pesi con l'ultimo valore registrato per ogni esercizio
     const esercizi = workoutData[dayId]?.esercizi || []
-    const ultimiPesi = trovaUltimiPesi(esercizi, sessioniCompletate)
+    const ultimiPesi = trovaUltimiPesi(esercizi, storicoPesi)
     const exercises = {}
 
     for (const [esercizioId, ultimiSet] of Object.entries(ultimiPesi)) {
@@ -218,6 +264,21 @@ export function AppProvider({ children }) {
       const altre = prev.filter((s) => s.date !== oggi)
       return [...altre, completata]
     })
+
+    // Alimenta lo storico pesi — indipendente da questa scheda/sessione
+    const esercizi = workoutData[activeSession.dayId]?.esercizi || []
+    setStoricoPesi((prev) => {
+      const aggiornato = { ...prev }
+      for (const es of esercizi) {
+        if (es.isBodyweight) continue
+        const set = activeSession.exercises[es.id]?.sets
+        if (!set || !set.some((s) => s.weight)) continue
+        const chiave = chiaveStorico(es)
+        aggiornato[chiave] = [...(aggiornato[chiave] || []), { data: oggi, sets: set }]
+      }
+      return aggiornato
+    })
+
     setActiveSession(null)
     autoBackup() // fire-and-forget, funziona con qualsiasi provider configurato
   }
@@ -257,6 +318,7 @@ export function AppProvider({ children }) {
       value={{
         sessions,
         sessioniCompletate,
+        storicoPesi,
         activeSession,
         settings,
         setSettings,

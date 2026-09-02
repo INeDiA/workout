@@ -57,6 +57,10 @@ export default function ExercisePicker({ onSelect, onClose, onCreaPersonalizzato
       note: esercizio.note || '',
       isBodyweight: esercizio.isBodyweight || false,
       isTime: esercizio.isTime || false,
+      // Riferimento stabile alla voce del catalogo (database o personalizzato)
+      // da cui proviene — permette di ritrovare lo storico pesi anche se
+      // l'esercizio viene rinominato o l'app cambia lingua in seguito
+      catalogId: esercizio.id,
     }
   }
 

@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import ProgressChart from '../components/ProgressChart'
 import SessionePassataModal from '../components/SessionePassataModal'
 import { COLORI_SESSIONE } from '../data/workout'
+import { chiaveStorico } from '../utils/ultimiPesi'
 
 // Data locale in formato YYYY-MM-DD (evita sfasamenti UTC)
 function toLocalDateStr(d) {
@@ -286,9 +287,8 @@ export default function Storico() {
                 .map((e) => (
                   <ProgressChart
                     key={e.id}
-                    esercizioId={e.id}
                     nomeEsercizio={e.nome}
-                    sessions={sessioniCompletate}
+                    chiaveStorico={chiaveStorico(e)}
                     isInverted={!!e.isInverted}
                   />
                 ))}
