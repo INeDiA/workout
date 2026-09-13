@@ -62,6 +62,7 @@ export const en = {
     progressionePesi: 'Weight progress',
     aggiungiAllenamento: 'Add workout',
     qualeSessione: 'Which session did you do?',
+    nessunaProgressione: 'Complete the same exercise at least 2 times to see its progress here.',
     localeData: 'en-US',
   },
 

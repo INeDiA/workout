@@ -62,6 +62,7 @@ export const it = {
     progressionePesi: 'Progressione pesi',
     aggiungiAllenamento: 'Aggiungi allenamento',
     qualeSessione: 'Quale sessione hai svolto?',
+    nessunaProgressione: 'Completa lo stesso esercizio almeno 2 volte per vederne qui la progressione.',
     localeData: 'it-IT',
   },
 

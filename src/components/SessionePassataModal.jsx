@@ -14,7 +14,11 @@ export default function SessionePassataModal({ sessione, onClose, onElimina }) {
   const [salvato, setSalvato] = useState(false)
   const [confermaElimina, setConfermaElimina] = useState(false)
 
-  const giorno = workoutData[sessione.dayId]
+  // Preferisce lo snapshot congelato al momento del completamento — resta
+  // corretto anche se nel frattempo cambi scheda attiva, rinomini/elimini la
+  // sessione o l'esercizio nella scheda. Fallback su workoutData solo per
+  // sessioni non ancora migrate la cui scheda esiste ancora ed è attiva.
+  const giorno = sessione.giornoSnapshot || workoutData[sessione.dayId]
 
   // Data leggibile — evita sfasamenti UTC
   const [anno, mese, giornoDt] = sessione.date.split('-').map(Number)

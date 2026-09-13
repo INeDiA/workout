@@ -3,8 +3,21 @@ import { Flame, Calendar, TrendingUp, X } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import ProgressChart from '../components/ProgressChart'
 import SessionePassataModal from '../components/SessionePassataModal'
-import { COLORI_SESSIONE } from '../data/workout'
+import { useEserciziCustom } from '../components/ExercisePicker'
+import { COLORI_SESSIONE, GRUPPO_LABELS } from '../data/workout'
+import { GRUPPI_MUSCOLARI } from '../data/exerciseDatabase'
 import { chiaveStorico } from '../utils/ultimiPesi'
+
+// Risale dall'etichetta salvata su un esercizio (già tradotta nella lingua di
+// quando è stato aggiunto, in it o en) alla chiave stabile del gruppo
+// muscolare, per poter ordinare/raggruppare in modo coerente
+function chiaveGruppoDaEtichetta(etichetta) {
+  for (const chiave of GRUPPI_MUSCOLARI) {
+    const label = GRUPPO_LABELS[chiave]
+    if (label && (label.it === etichetta || label.en === etichetta)) return chiave
+  }
+  return null
+}
 
 // Data locale in formato YYYY-MM-DD (evita sfasamenti UTC)
 function toLocalDateStr(d) {
@@ -33,13 +46,11 @@ const GIORNI_SETTIMANA = ['L', 'M', 'M', 'G', 'V', 'S', 'D']
 
 export default function Storico() {
   const {
-    t, sessioniCompletate, streak, streakRecord, workoutData, schede, schedaAttiva,
+    t, lingua, sessioniCompletate, streak, streakRecord, storicoPesi, schede, schedaAttiva,
     activeSession, aggiungiSessionePassata, eliminaSessionePassata,
   } = useApp()
+  const [eserciziCustom] = useEserciziCustom()
 
-  // Sessione iniziale per il grafico: prima sessione della scheda attiva
-  const primaSessioneId = schedaAttiva?.sessioni?.[0]?.id || null
-  const [giornoGrafico, setGiornoGrafico] = useState(primaSessioneId)
   const [sessioneSelezionata, setSessioneSelezionata] = useState(null)
   const [giornoAggiunta, setGiornoAggiunta] = useState(null) // { giorno, data } per selettore sessione
   const [activeTab, setActiveTab] = useState('calendario')
@@ -89,11 +100,61 @@ export default function Storico() {
     ? (sessioniCompletate.length / settimaneDaSempre).toFixed(1)
     : '—'
 
-  // Se la sessione selezionata non esiste più, usa la prima disponibile
-  const giornoGraficoEffettivo =
-    giornoGrafico && workoutData[giornoGrafico]
-      ? giornoGrafico
-      : primaSessioneId
+  // Metadati (nome/gruppo/isInverted) per ogni esercizio mai visto, indicizzati
+  // per chiaveStorico — usati per raggruppare la progressione per gruppo
+  // muscolare indipendentemente da quale scheda/sessione li abbia generati.
+  // Priorità: schede attuali (riflette rinomine/stato più recente) → esercizi
+  // personalizzati → snapshot delle sessioni passate (unica fonte rimasta per
+  // esercizi ormai spariti da ogni scheda e da ogni personalizzato)
+  const metaEsercizi = useMemo(() => {
+    const map = {}
+    for (const s of (schede || [])) {
+      for (const sess of (s.sessioni || [])) {
+        for (const e of (sess.esercizi || [])) {
+          if (e.isBodyweight) continue
+          map[chiaveStorico(e)] = { nome: e.nome, gruppo: e.gruppo, isInverted: !!e.isInverted }
+        }
+      }
+    }
+    for (const e of (eserciziCustom || [])) {
+      if (e.isBodyweight) continue
+      const chiave = chiaveStorico(e)
+      if (!map[chiave]) map[chiave] = { nome: e.nome, gruppo: e.gruppo, isInverted: !!e.isInverted }
+    }
+    for (const sess of sessioniCompletate) {
+      for (const e of (sess.giornoSnapshot?.esercizi || [])) {
+        if (e.isBodyweight) continue
+        const chiave = chiaveStorico(e)
+        if (!map[chiave]) map[chiave] = { nome: e.nome, gruppo: e.gruppo, isInverted: !!e.isInverted }
+      }
+    }
+    return map
+  }, [schede, eserciziCustom, sessioniCompletate])
+
+  // Progressione pesi: solo esercizi con almeno 2 sessioni registrate (anche se
+  // non più nella scheda attiva, o mai stati nella scheda attiva), raggruppati
+  // per gruppo muscolare — indipendente da quale scheda/sessione li contiene
+  const progressionePerGruppo = useMemo(() => {
+    const gruppi = {}
+    for (const chiave of Object.keys(storicoPesi)) {
+      if ((storicoPesi[chiave]?.length || 0) < 2) continue
+      const meta = metaEsercizi[chiave] || { nome: chiave, gruppo: null, isInverted: false }
+      const chiaveGruppo = meta.gruppo ? chiaveGruppoDaEtichetta(meta.gruppo) : null
+      const bucket = chiaveGruppo || '__altro__'
+      if (!gruppi[bucket]) gruppi[bucket] = []
+      gruppi[bucket].push({ chiave, nome: meta.nome, isInverted: meta.isInverted })
+    }
+    for (const bucket of Object.keys(gruppi)) {
+      gruppi[bucket].sort((a, b) => a.nome.localeCompare(b.nome))
+    }
+    return [...GRUPPI_MUSCOLARI, '__altro__']
+      .filter((chiave) => gruppi[chiave]?.length > 0)
+      .map((chiave) => ({
+        chiave,
+        label: chiave === '__altro__' ? t.editExerciseModal.altro : (GRUPPO_LABELS[chiave]?.[lingua] ?? chiave),
+        esercizi: gruppi[chiave],
+      }))
+  }, [storicoPesi, metaEsercizi, lingua, t])
 
   return (
     <div className="min-h-screen bg-gray-950 pb-24">
@@ -263,36 +324,33 @@ export default function Storico() {
         </div>
         )}
 
-        {/* Grafici progressione pesi */}
-        {activeTab === 'progressione' && schedaAttiva?.sessioni?.length > 0 && (
+        {/* Grafici progressione pesi — tutti gli esercizi con almeno 2 sessioni
+            registrate, raggruppati per gruppo muscolare, indipendentemente
+            dalla scheda attiva */}
+        {activeTab === 'progressione' && (
           <div>
-            <h2 className="text-sm font-semibold text-white mb-2">{t.storico.progressionePesi}</h2>
-            <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1 overflow-x-auto no-scrollbar mb-3">
-              {schedaAttiva.sessioni.map((sess) => (
-                <button
-                  key={sess.id}
-                  onClick={() => setGiornoGrafico(sess.id)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    giornoGraficoEffettivo === sess.id ? 'bg-gray-700 text-white' : 'text-gray-400'
-                  }`}
-                >
-                  {sess.emoji} {sess.nome}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              {(workoutData[giornoGraficoEffettivo]?.esercizi || [])
-                .filter((e) => !e.isBodyweight)
-                .map((e) => (
-                  <ProgressChart
-                    key={e.id}
-                    nomeEsercizio={e.nome}
-                    chiaveStorico={chiaveStorico(e)}
-                    isInverted={!!e.isInverted}
-                  />
+            <h2 className="text-sm font-semibold text-white mb-3">{t.storico.progressionePesi}</h2>
+            {progressionePerGruppo.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">{t.storico.nessunaProgressione}</p>
+            ) : (
+              <div className="space-y-5">
+                {progressionePerGruppo.map((gruppo) => (
+                  <div key={gruppo.chiave}>
+                    <p className="text-xs font-semibold text-gray-500 mb-2">{gruppo.label}</p>
+                    <div className="space-y-3">
+                      {gruppo.esercizi.map((e) => (
+                        <ProgressChart
+                          key={e.chiave}
+                          nomeEsercizio={e.nome}
+                          chiaveStorico={e.chiave}
+                          isInverted={e.isInverted}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -30,6 +30,19 @@ function dataOggi() {
   ].join('-')
 }
 
+// Copia congelata di un giorno (nome/emoji/esercizi) da allegare alla sessione
+// completata — così il dettaglio resta consultabile anche se la scheda viene
+// cancellata, cambiata, o la sessione/l'esercizio rimossi in seguito
+function snapshotGiorno(giorno) {
+  if (!giorno) return null
+  return {
+    nome: giorno.nome,
+    focus: giorno.focus,
+    emoji: giorno.emoji,
+    esercizi: (giorno.esercizi || []).map((e) => ({ ...e })),
+  }
+}
+
 export function AppProvider({ children }) {
   const [sessions, setSessions] = useLocalStorage('sm_sessions', [])
   const [activeSession, setActiveSession] = useLocalStorage('sm_active_session', null)
@@ -118,6 +131,38 @@ export function AppProvider({ children }) {
       })
     } catch {
       // Migrazione fallita: nessun dato esistente viene toccato, si riparte da uno storico vuoto
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Migrazione una tantum: allega a ogni sessione completata già esistente uno
+  // snapshot del giorno (nome/emoji/esercizi), cercandolo in TUTTE le schede
+  // (non solo quella attiva) — best-effort: una scheda già cancellata prima di
+  // questo aggiornamento non è recuperabile, quella sessione resta come prima
+  useEffect(() => {
+    if (localStorage.getItem('sm_sessioni_snapshot_migrato')) return
+    localStorage.setItem('sm_sessioni_snapshot_migrato', 'true')
+
+    try {
+      setSessions((prev) =>
+        prev.map((sess) => {
+          try {
+            if (!sess.completed || sess.giornoSnapshot) return sess
+            let giorno = null
+            for (const s of (schede || [])) {
+              const trovata = s.sessioni?.find((x) => x.id === sess.dayId)
+              if (trovata) { giorno = trovata; break }
+            }
+            if (!giorno) return sess
+            return { ...sess, giornoSnapshot: snapshotGiorno(giorno) }
+          } catch {
+            // Sessione con dati inattesi: la lascia invariata senza compromettere le altre
+            return sess
+          }
+        })
+      )
+    } catch {
+      // Migrazione fallita: le sessioni restano invariate
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -259,14 +304,15 @@ export function AppProvider({ children }) {
 
   function completaSessione() {
     if (!activeSession) return
-    const completata = { ...activeSession, completed: true }
+    const giorno = workoutData[activeSession.dayId]
+    const completata = { ...activeSession, completed: true, giornoSnapshot: snapshotGiorno(giorno) }
     setSessions((prev) => {
       const altre = prev.filter((s) => s.date !== oggi)
       return [...altre, completata]
     })
 
     // Alimenta lo storico pesi — indipendente da questa scheda/sessione
-    const esercizi = workoutData[activeSession.dayId]?.esercizi || []
+    const esercizi = giorno?.esercizi || []
     setStoricoPesi((prev) => {
       const aggiornato = { ...prev }
       for (const es of esercizi) {
@@ -300,6 +346,7 @@ export function AppProvider({ children }) {
       dayId,
       completed: true,
       exercises: {},
+      giornoSnapshot: snapshotGiorno(workoutData[dayId]),
       nutrition: { pre: false, integratori: false, post: false, note: '' },
     }
     setSessions((prev) => {
